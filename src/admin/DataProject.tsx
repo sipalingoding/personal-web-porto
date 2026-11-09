@@ -735,7 +735,7 @@ function ExperienceSection({ adminKey, initial }: { adminKey: string; initial: E
 
 /* ------------------------------------------------------------------ page */
 
-function KeyGate({ onUnlock }: { onUnlock: (key: string) => void }) {
+export function KeyGate({ onUnlock }: { onUnlock: (key: string) => void }) {
   const [key, setKey] = useState('');
   const [status, setStatus] = useState<Status>(idle);
   const id = useId();
@@ -774,24 +774,43 @@ function KeyGate({ onUnlock }: { onUnlock: (key: string) => void }) {
   );
 }
 
-export default function DataProject() {
-  useTheme();
+/** Admin key kept for the browser session, checked by the API before anything loads. */
+export function useAdminKey() {
   const [adminKey, setAdminKey] = useState(readKey);
-  const [content, setContent] = useState<Content | null>(null);
-  const [loadError, setLoadError] = useState('');
-  const [attempt, setAttempt] = useState(0);
+  const unlock = (key: string) => {
+    writeKey(key);
+    setAdminKey(key);
+  };
+  const lock = () => {
+    writeKey('');
+    setAdminKey('');
+  };
+  return { adminKey, unlock, lock };
+}
 
+/** Hides an owner-only page from search engines while it is open. */
+export function useNoIndex(title: string) {
   useEffect(() => {
-    document.title = 'Data project · Salman Faris Siddiq';
+    document.title = title;
     const robots = document.createElement('meta');
     robots.name = 'robots';
     robots.content = 'noindex, nofollow';
     document.head.append(robots);
     return () => robots.remove();
-  }, []);
+  }, [title]);
+}
+
+/** Loads the site content after re-checking the key; a rejected key calls `onLocked`. */
+export function useAdminContent(adminKey: string, onLocked: () => void) {
+  const [content, setContent] = useState<Content | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!adminKey) return;
+    if (!adminKey) {
+      setContent(null);
+      return;
+    }
     const ctrl = new AbortController();
     setLoadError('');
     // A key saved from an earlier visit is checked again before anything loads.
@@ -801,25 +820,51 @@ export default function DataProject() {
       .catch((err: unknown) => {
         if (ctrl.signal.aborted) return;
         if (err instanceof ApiError && err.status === 401) {
-          writeKey('');
-          setAdminKey('');
+          onLocked();
           return;
         }
         setLoadError(message(err));
       });
     return () => ctrl.abort();
+    // onLocked is a fresh function each render; only the key and retries decide when to load.
   }, [adminKey, attempt]);
 
-  const unlock = (key: string) => {
-    writeKey(key);
-    setAdminKey(key);
-  };
+  return { content, loadError, retry: () => setAttempt((n) => n + 1) };
+}
 
-  const lock = () => {
-    writeKey('');
-    setAdminKey('');
-    setContent(null);
-  };
+export function LoadState({ loadError, onRetry }: { loadError: string; onRetry: () => void }) {
+  return loadError ? (
+    <div className="adm-error" role="alert">
+      <p>Could not load the data: {loadError}</p>
+      <button type="button" className="btn g" onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  ) : (
+    <p className="adm-status busy" role="status">
+      Loading data from Neon…
+    </p>
+  );
+}
+
+/** Every editable section of the public site, each saving on its own. */
+export function SiteDataSections({ adminKey, content }: { adminKey: string; content: Content }) {
+  return (
+    <>
+      <CvSection adminKey={adminKey} initial={content.cv} />
+      <StatsSection adminKey={adminKey} initial={content.stats} />
+      <PartnersSection adminKey={adminKey} initial={content.partners} />
+      <ProjectsSection adminKey={adminKey} initial={content.projects} />
+      <ExperienceSection adminKey={adminKey} initial={content.experience} />
+    </>
+  );
+}
+
+export default function DataProject() {
+  useTheme();
+  useNoIndex('Data project · Salman Faris Siddiq');
+  const { adminKey, unlock, lock } = useAdminKey();
+  const { content, loadError, retry } = useAdminContent(adminKey, lock);
 
   return (
     <main className="adm">
@@ -840,31 +885,8 @@ export default function DataProject() {
         </header>
 
         {!adminKey && <KeyGate onUnlock={unlock} />}
-
-        {adminKey && !content && !loadError && (
-          <p className="adm-status busy" role="status">
-            Loading data from Neon…
-          </p>
-        )}
-
-        {adminKey && loadError && (
-          <div className="adm-error" role="alert">
-            <p>Could not load the data: {loadError}</p>
-            <button type="button" className="btn g" onClick={() => setAttempt((n) => n + 1)}>
-              Try again
-            </button>
-          </div>
-        )}
-
-        {adminKey && content && (
-          <>
-            <CvSection adminKey={adminKey} initial={content.cv} />
-            <StatsSection adminKey={adminKey} initial={content.stats} />
-            <PartnersSection adminKey={adminKey} initial={content.partners} />
-            <ProjectsSection adminKey={adminKey} initial={content.projects} />
-            <ExperienceSection adminKey={adminKey} initial={content.experience} />
-          </>
-        )}
+        {adminKey && !content && <LoadState loadError={loadError} onRetry={retry} />}
+        {adminKey && content && <SiteDataSections adminKey={adminKey} content={content} />}
       </div>
     </main>
   );

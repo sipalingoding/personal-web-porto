@@ -57,7 +57,7 @@ export const fetchContent = async (signal?: AbortSignal): Promise<Content> => {
   return { ...c, projects: normalizeProjects(c.projects) };
 };
 
-export function adminRequest<T>(key: string, method: 'GET' | 'PUT', path: string, body?: unknown) {
+export function adminRequest<T>(key: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown) {
   return request<T>(`/admin${path}`, {
     method,
     headers: { 'X-Admin-Key': key, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },

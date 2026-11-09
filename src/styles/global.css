@@ -661,8 +661,11 @@ svg.ic path {
   animation: drift 42s linear infinite;
 }
 
-.mq:hover .track {
-  animation-play-state: paused;
+/* Only where a real pointer hovers: on touch screens :hover sticks after a tap and would freeze the strip. */
+@media (hover: hover) and (pointer: fine) {
+  .mq:hover .track {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes drift {
@@ -2242,7 +2245,12 @@ footer {
     scroll-behavior: auto;
   }
 
-  .track,
+  /* Many phones turn this setting on (Android "Remove animations", battery saver, iOS Reduce Motion).
+     The strip keeps a slow drift there instead of stopping. */
+  .track {
+    animation-duration: 120s;
+  }
+
   .caret,
   .disc-panel:not([hidden]),
   .kind-panel:not([hidden]) {

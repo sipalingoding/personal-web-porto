@@ -23,6 +23,8 @@ Konten situs (CV, angka di hero, "Worked with", daftar proyek, experience) disim
 
 Logo di "Worked with" tampil dengan warna aslinya (SVG, PNG, JPEG, atau WebP, maksimal 2 MB; latar transparan paling rapi di kedua tema). Partner tanpa logo tampil sebagai nama.
 
+Dashboard pribadi ada di **`/mydashboard`**, terpisah dari portofolio (tidak mengambil data situs). Sidebar berupa ikon: Home, Project, Ibadah, Run, Buku, Learning, Vocab. Dikunci dengan `ADMIN_KEY` yang sama. Menu Project berisi papan kanban: project (nama, Professional/Freelance, keterangan) ditambah lewat popup, lalu task tiap project tampil di kolom Not started, On progress, Selesai. Data di tabel `board_projects` dan `board_tasks`, lewat rute `/admin/board/*`. Menu lain masih kosong.
+
 Kelola datanya di **`/data-project`** (tidak ada link dari situs; ketik URL-nya). Masukkan nilai `ADMIN_KEY` dari `.env.local`.
 
 ```bash
@@ -51,6 +53,7 @@ db/                  schema.sql, migrate.ts, seed.ts
 neon.ts              layanan Neon (bucket, Function, ADMIN_KEY)
 src/
   admin/             halaman /data-project
+  dashboard/         halaman /mydashboard (dashboard pribadi, sidebar ikon)
   data/
     site.ts          email, tautan sosial, link CV, menu
     content.ts       tipe konten + data bawaan (seed dan fallback)

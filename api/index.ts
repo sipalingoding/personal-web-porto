@@ -15,6 +15,7 @@ import { HTTPException } from 'hono/http-exception';
 import pg from 'pg';
 import { IMAGE_ID, type Content, type CvInfo } from '../src/data/content.js';
 import { stackText } from '../src/data/stack.js';
+import { boardRoutes } from './board.js';
 import { parseExperience, parsePartners, parseProjects, parseStats } from './validate.js';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
@@ -98,7 +99,7 @@ app.use(
   '*',
   cors({
     origin: '*',
-    allowMethods: ['GET', 'PUT', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'X-Admin-Key', 'X-Filename'],
     maxAge: 86400,
   }),
@@ -191,6 +192,9 @@ app.put('/admin/logo', async (c) => c.json({ logo: await storeImage(c, 'logos', 
 app.put('/admin/shot', async (c) => c.json({ image: await storeImage(c, 'shots', MAX_SHOT_BYTES, 'image') }));
 
 app.get('/admin/check', (c) => c.json({ ok: true }));
+
+// Project board for /mydashboard; separate from the portfolio's content.
+app.route('/admin/board', boardRoutes(pool));
 
 app.put('/admin/stats', async (c) => {
   const s = parseStats(await c.req.json());

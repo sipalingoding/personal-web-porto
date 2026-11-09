@@ -80,3 +80,33 @@ create table if not exists cv_file (
   size_bytes integer not null check (size_bytes > 0),
   updated_at timestamptz not null default now()
 );
+
+-- Project board in /mydashboard (separate from the portfolio's projects above).
+-- Projects hold the details; tasks belong to a project and sit in a status column.
+create table if not exists board_projects (
+  id serial primary key,
+  title text not null check (length(title) between 1 and 120),
+  kind text not null default 'Freelance' check (kind in ('Professional', 'Freelance')),
+  description text not null default '' check (length(description) <= 2000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists board_tasks (
+  id serial primary key,
+  project_id integer not null references board_projects (id) on delete cascade,
+  title text not null check (length(title) between 1 and 200),
+  status text not null default 'not_started' check (status in ('not_started', 'in_progress', 'done')),
+  position integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- The first version kept the status on projects and a done flag on tasks; both tables were empty when it changed.
+alter table board_projects add column if not exists kind text not null default 'Freelance' check (kind in ('Professional', 'Freelance'));
+alter table board_projects drop column if exists status;
+alter table board_projects drop column if exists position;
+alter table board_tasks add column if not exists status text not null default 'not_started' check (status in ('not_started', 'in_progress', 'done'));
+alter table board_tasks drop column if exists done;
+
+drop index if exists board_tasks_project_idx;
+create index if not exists board_tasks_status_idx on board_tasks (status, position);
