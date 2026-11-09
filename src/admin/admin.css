@@ -1,0 +1,704 @@
+/* ------------------------------------------------------------------
+   /data-project: owner-only editor. Reuses the site's tokens, type and
+   buttons so it reads as part of the same file, kept calm on purpose.
+   ------------------------------------------------------------------ */
+.adm {
+  min-height: 100vh;
+  padding-block: 4rem 6rem;
+}
+
+.adm-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.adm-top h1 {
+  margin-top: 1rem;
+  font-size: 3rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.adm-top p {
+  max-width: 36rem;
+  margin-top: 1rem;
+  line-height: 1.6;
+  color: var(--body);
+}
+
+.adm-sec {
+  display: grid;
+  grid-template-columns: 20rem minmax(0, 1fr);
+  gap: 3rem;
+  padding-block: 2.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.adm-head h2 {
+  margin-top: 0.875rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.adm-head p {
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--body);
+}
+
+.adm-body {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.adm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+.adm-field {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.adm-field.wide,
+.adm-check.wide,
+.adm-wide {
+  grid-column: 1 / -1;
+}
+
+.adm-field label {
+  font: 400 0.6875rem/1.4 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--com);
+}
+
+.adm-field input,
+.adm-field textarea,
+.adm-field select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--cell);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  transition: border-color 0.2s;
+}
+
+.adm-field textarea {
+  resize: vertical;
+}
+
+.adm-field input:hover,
+.adm-field textarea:hover,
+.adm-field select:hover {
+  border-color: var(--mut);
+}
+
+/* The native control pads its text further in than the inputs and pins its arrow to the
+   border, so the box is drawn here and the arrow is a chevron in the theme's text colour. */
+.adm-select {
+  position: relative;
+  display: block;
+}
+
+.adm-field .adm-select select {
+  appearance: none;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.adm-select::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-right: 1.5px solid var(--mut);
+  border-bottom: 1.5px solid var(--mut);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.adm-select:hover::after {
+  border-color: var(--fg);
+}
+
+.adm-select option {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.adm-field input[type='file'] {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.adm-field input::placeholder {
+  color: var(--ph);
+}
+
+.adm-check {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.adm-check input {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--acc);
+}
+
+.adm-list {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.adm-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.adm-row .adm-field {
+  flex: 1;
+}
+
+.adm-partner {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.adm-logo {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.adm-logo-preview {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 0.5rem;
+  min-height: 4.5rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Same mark as the strip, at a size where long names fit the box. */
+.adm-logo-preview .pname {
+  max-width: 100%;
+  font-size: 1rem;
+  white-space: normal;
+}
+
+.adm-logo-preview .plogo {
+  height: 1.5rem;
+  max-width: 100%;
+}
+
+.adm-logo-note {
+  font: 400 0.6875rem/1.4 var(--mono);
+  color: var(--com);
+}
+
+.adm-logo > .navb {
+  margin-bottom: 0.4375rem;
+}
+
+.adm-wide {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.adm-shots-empty {
+  padding: 1.25rem 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.adm-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-shot-item {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.adm-shot-item .adm-tools {
+  justify-content: flex-start;
+}
+
+.adm-shot-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border: 1px dashed var(--line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.adm-shot-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.adm-shot-thumb .no {
+  position: absolute;
+  left: 0.375rem;
+  top: 0.375rem;
+  padding: 0.125rem 0.3125rem;
+  border-radius: 0.25rem;
+  background: var(--bg);
+  font: 500 0.6875rem/1 var(--mono);
+  color: var(--fg);
+}
+
+.adm-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.adm-row .adm-tools {
+  padding-bottom: 0.4375rem;
+}
+
+.navb:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.navb.danger:not(:disabled):hover {
+  border-color: var(--fg);
+}
+
+.adm-item {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+}
+
+.adm-item[open] {
+  padding-bottom: 1.25rem;
+}
+
+.adm-item > :not(summary) {
+  margin-inline: 1.25rem;
+}
+
+.adm-item > .adm-tools {
+  margin-top: 1.25rem;
+}
+
+.adm-item summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.adm-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.adm-item summary::after {
+  content: '+';
+  margin-left: auto;
+  font: 400 1rem/1 var(--mono);
+  color: var(--com);
+}
+
+.adm-item[open] summary {
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.adm-item[open] summary::after {
+  content: '−';
+  color: var(--acc-tx);
+}
+
+.adm-item[open] > .adm-grid {
+  margin-top: 1.25rem;
+}
+
+.adm-item summary .no,
+.adm-item summary .meta {
+  font: 400 0.75rem/1 var(--mono);
+  color: var(--com);
+}
+
+.adm-item summary b {
+  font-weight: 500;
+}
+
+.adm-add {
+  justify-self: start;
+}
+
+/* Delete sits on the collapsed row, so it is reachable without opening the editor. */
+.adm-proj {
+  position: relative;
+}
+
+/* Room for Delete between the row text and the +/− marker, which stays at the far right. */
+.adm-proj .adm-item summary::after {
+  padding-left: 3.75rem;
+}
+
+.adm-del {
+  position: absolute;
+  top: 0.6875rem;
+  right: 3rem;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 1.875rem;
+  padding: 0;
+}
+
+.adm-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.875rem;
+  padding: 0;
+}
+
+.adm-icon .trash,
+.adm-del .trash {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.adm-del[aria-expanded='true'] {
+  border-color: var(--fg);
+}
+
+.adm-confirm {
+  display: grid;
+  gap: 0.875rem;
+  margin-top: 0.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--fg);
+  border-radius: var(--r);
+  background: var(--cell);
+}
+
+.adm-confirm p {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--body);
+}
+
+.adm-confirm b {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.adm-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Destructive confirm: the strongest neutral, not the accent the site uses for "go". */
+.adm .btn.del {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.adm-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.adm-bar .adm-status {
+  margin-right: auto;
+}
+
+.adm .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.adm-status {
+  font: 400 0.8125rem/1.5 var(--mono);
+  color: var(--com);
+}
+
+.adm-status.busy {
+  padding-top: 2rem;
+}
+
+.adm-bar .adm-status.busy {
+  padding-top: 0;
+}
+
+.adm-status.ok {
+  color: var(--acc-tx);
+}
+
+.adm-status.error {
+  color: var(--fg);
+}
+
+.adm-status.error::before {
+  content: 'Error: ';
+  font-weight: 600;
+}
+
+.adm-cv p,
+.adm-empty,
+.adm-hint {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--body);
+}
+
+.adm-cv b {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.adm-link {
+  color: var(--acc-tx);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.adm-gate {
+  display: grid;
+  gap: 1rem;
+  max-width: 28rem;
+  padding-top: 2.5rem;
+}
+
+.adm-error {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+  padding-top: 2rem;
+  color: var(--fg);
+}
+
+@media (max-width: 900px) {
+  .adm {
+    padding-block: 2.5rem 4rem;
+  }
+
+  .adm-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .adm-top h1 {
+    font-size: 2.25rem;
+  }
+
+  .adm-sec {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .adm-grid,
+  .adm-logo {
+    grid-template-columns: 1fr;
+  }
+
+  .adm-logo > .navb {
+    justify-self: start;
+    margin-bottom: 0;
+  }
+
+  .adm-del {
+    top: 0.3125rem;
+    width: 2.75rem;
+  }
+
+  .adm-proj .adm-item summary::after {
+    padding-left: 4.5rem;
+  }
+
+  .adm-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adm-row .adm-tools {
+    padding-bottom: 0;
+  }
+
+  .adm-bar .adm-status {
+    flex-basis: 100%;
+  }
+}
+
+/* Stack picker: chosen technologies as chips, then a search box with a suggestion list. */
+.adm-stack {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  padding: 0.375rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--cell);
+  cursor: text;
+  transition: border-color 0.2s;
+}
+
+.adm-stack:hover {
+  border-color: var(--com);
+}
+
+.adm-stack:focus-within {
+  border-color: var(--acc);
+}
+
+.adm-stack-chips {
+  display: contents;
+  list-style: none;
+}
+
+.adm-stack-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 1.875rem;
+  padding: 0 0.25rem 0 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.375rem;
+  background: var(--bg);
+  font-size: 0.875rem;
+}
+
+.adm-stack-chips button {
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 0.25rem;
+  color: var(--com);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.adm-stack-chips button:hover {
+  color: var(--fg);
+  background: var(--cell);
+}
+
+.adm-stack-custom {
+  font: 400 0.625rem/1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--com);
+}
+
+.adm-field .adm-stack input {
+  flex: 1 1 12rem;
+  width: auto;
+  min-height: 1.875rem;
+  padding: 0 0.375rem;
+  border: 0;
+  background: transparent;
+}
+
+.adm-field .adm-stack input:focus {
+  outline: none;
+}
+
+.adm-stack-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  max-height: 16rem;
+  margin: 0;
+  padding: 0.25rem;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--bg);
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.25);
+}
+
+.adm-stack-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.adm-stack-list li.on {
+  background: var(--cell);
+}
+
+.adm-stack-add {
+  color: var(--com);
+}
+
+.adm-stack-list .sti {
+  width: 1.125rem;
+  height: 1.125rem;
+}
