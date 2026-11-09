@@ -1,4 +1,4 @@
-import type { StackItem } from './stack';
+import type { StackItem } from './stack.js';
 
 export type Discipline = 'Frontend' | 'Backend' | 'UI/UX Designer';
 

@@ -1,5 +1,5 @@
-import { experience, type Experience } from './experience';
-import { projects, type Project } from './projects';
+import { experience, type Experience } from './experience.js';
+import { projects, type Project } from './projects.js';
 
 export type Stats = { projectsDelivered: number; coreFrameworks: number };
 

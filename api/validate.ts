@@ -1,8 +1,8 @@
 import { HTTPException } from 'hono/http-exception';
-import { IMAGE_ID, MAX_PROJECT_DUTIES, MAX_PROJECT_IMAGES, type Partner, type Stats } from '../src/data/content';
-import type { Experience } from '../src/data/experience';
-import { disciplines, kinds, type Project } from '../src/data/projects';
-import { HEX, ICON_SLUG, MAX_STACK, type StackItem } from '../src/data/stack';
+import { IMAGE_ID, MAX_PROJECT_DUTIES, MAX_PROJECT_IMAGES, type Partner, type Stats } from '../src/data/content.js';
+import type { Experience } from '../src/data/experience.js';
+import { disciplines, kinds, type Project } from '../src/data/projects.js';
+import { HEX, ICON_SLUG, MAX_STACK, type StackItem } from '../src/data/stack.js';
 
 const fail = (message: string): never => {
   throw new HTTPException(400, { message });

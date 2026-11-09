@@ -13,9 +13,9 @@ import { cors } from 'hono/cors';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
 import pg from 'pg';
-import { IMAGE_ID, type Content, type CvInfo } from '../src/data/content';
-import { stackText } from '../src/data/stack';
-import { parseExperience, parsePartners, parseProjects, parseStats } from './validate';
+import { IMAGE_ID, type Content, type CvInfo } from '../src/data/content.js';
+import { stackText } from '../src/data/stack.js';
+import { parseExperience, parsePartners, parseProjects, parseStats } from './validate.js';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
 attachDatabasePool(pool);
