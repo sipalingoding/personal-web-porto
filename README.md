@@ -37,7 +37,7 @@ URL Function dibaca dari `.env.local` saat build (`vite.config.ts`). Kalau API t
 
 1. **CV**: unggah PDF di `/data-project`. Semua tombol "Download CV" mengarah ke `GET /cv` di Function.
 2. **Env**: hosting perlu `NEON_BRANCH_ID` dan `NEON_FUNCTION_HOST_SUFFIX` saat build (atau `VITE_API_URL` berisi URL Function). Jangan taruh `DATABASE_URL` atau `ADMIN_KEY` di hosting frontend; keduanya hanya dipakai Function dan skrip lokal.
-3. **Rewrite**: `/data-project` adalah route sisi klien, jadi hosting harus mengarahkan path itu ke `index.html` (Vercel/Netlify: rewrite ke `/index.html`).
+3. **Rewrite**: `/data-project` adalah route sisi klien, jadi hosting harus mengarahkan path itu ke `index.html`. Untuk Vercel sudah diatur di `vercel.json`; di hosting lain (Netlify, Nginx) buat rewrite yang sama.
 4. **Deploy**: hasil `npm run build` ada di `dist/` dan berupa file statis, jadi bisa diunggah ke Vercel, Netlify, Cloudflare Pages, atau hosting biasa (Nginx/Apache). Di Vercel/Netlify cukup pilih preset **Vite**.
 
 ## Struktur
