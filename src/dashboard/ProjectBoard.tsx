@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from 'react';
-import { Trash } from '../components/Icons';
 import { ApiError, adminRequest } from '../data/api';
 import {
   BOARD_LIMITS,
@@ -7,12 +6,16 @@ import {
   boardStatuses,
   statusLabel,
   type Board,
+  type BoardFeature,
   type BoardKind,
+  type BoardLink,
+  type BoardNote,
   type BoardOrder,
   type BoardProject,
   type BoardStatus,
   type BoardTask,
 } from '../data/board';
+import { Glyph, IconButton } from './icons';
 
 type Api = <T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown) => Promise<T>;
 
@@ -42,7 +45,7 @@ function moveTask(tasks: BoardTask[], id: number, status: BoardStatus, beforeId:
 
 /* ------------------------------------------------------------------ dialogs */
 
-function Modal(props: { title: string; onClose: () => void; children: ReactNode }) {
+function Modal(props: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   const headingId = useId();
   useEffect(() => {
@@ -51,7 +54,7 @@ function Modal(props: { title: string; onClose: () => void; children: ReactNode 
   return (
     <dialog
       ref={ref}
-      className="kb-dialog"
+      className={props.wide ? 'kb-dialog wide' : 'kb-dialog'}
       aria-labelledby={headingId}
       onClose={props.onClose}
       // A click on the backdrop lands on the dialog itself, not on its content.
@@ -60,9 +63,7 @@ function Modal(props: { title: string; onClose: () => void; children: ReactNode 
       <div className="kb-dialog-in">
         <div className="kb-dialog-hd">
           <h2 id={headingId}>{props.title}</h2>
-          <button type="button" className="navb" onClick={() => ref.current?.close()}>
-            Tutup
-          </button>
+          <IconButton icon="close" label="Tutup" tone="ghost" onClick={() => ref.current?.close()} />
         </div>
         {props.children}
       </div>
@@ -84,12 +85,8 @@ function FormActions(props: { busy: boolean; isNew: boolean; deleteText: ReactNo
         <div className="adm-confirm" role="group" aria-label="Konfirmasi hapus">
           <p>{props.deleteText}</p>
           <div className="adm-confirm-actions">
-            <button type="button" className="btn g" autoFocus disabled={props.busy} onClick={() => setConfirming(false)}>
-              Batal
-            </button>
-            <button type="button" className="btn del" disabled={props.busy} onClick={props.onDelete}>
-              {props.busy ? 'Menghapus…' : 'Hapus'}
-            </button>
+            <IconButton icon="close" label="Batal" autoFocus disabled={props.busy} onClick={() => setConfirming(false)} />
+            <IconButton icon="trash" label="Hapus" tone="del" busy={props.busy} onClick={props.onDelete} />
           </div>
         </div>
       ) : (
@@ -97,22 +94,181 @@ function FormActions(props: { busy: boolean; isNew: boolean; deleteText: ReactNo
           {props.isNew ? (
             <span />
           ) : (
-            <button type="button" className="navb danger adm-icon" onClick={() => setConfirming(true)} aria-label="Hapus" title="Hapus">
-              <Trash />
-            </button>
+            <IconButton icon="trash" label="Hapus" onClick={() => setConfirming(true)} />
           )}
-          <button type="submit" className="btn p" disabled={props.busy}>
-            {props.busy ? 'Menyimpan…' : props.isNew ? 'Tambah' : 'Simpan'}
-          </button>
+          <IconButton type="submit" icon={props.isNew ? 'plus' : 'check'} label={props.isNew ? 'Tambah' : 'Simpan'} tone="p" busy={props.busy} />
         </div>
       )}
     </>
   );
 }
 
+type FeaturesUpdate = (update: (features: BoardFeature[]) => BoardFeature[]) => void;
+
+const byName = (a: BoardFeature, b: BoardFeature) => a.name.localeCompare(b.name, 'id', { sensitivity: 'base' });
+
+/** One-line input that creates a feature for a project; Enter adds it without submitting the outer form. */
+function NewFeature(props: { projectId: number; api: Api; onCreated: (f: BoardFeature) => void; onCancel?: () => void; autoFocus?: boolean }) {
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const id = useId();
+
+  const create = async () => {
+    if (!name.trim()) return setError('Tulis nama fitur dulu.');
+    setBusy(true);
+    setError('');
+    try {
+      const res = await props.api<{ feature: BoardFeature }>('POST', `/board/projects/${props.projectId}/features`, { name });
+      props.onCreated(res.feature);
+      setName('');
+    } catch (err) {
+      setError(msg(err));
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div className="ft-new">
+      <div className="ft-new-row">
+        <label className="sr-only" htmlFor={id}>
+          Nama fitur baru
+        </label>
+        <input
+          id={id}
+          autoFocus={props.autoFocus}
+          placeholder="Nama fitur, misalnya Login"
+          value={name}
+          maxLength={BOARD_LIMITS.featureName}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              create();
+            }
+            if (e.key === 'Escape' && props.onCancel) {
+              e.preventDefault();
+              e.stopPropagation();
+              props.onCancel();
+            }
+          }}
+        />
+        <IconButton icon="plus" label="Tambah fitur" tone="p" size="sm" busy={busy} onClick={create} />
+        {props.onCancel && <IconButton icon="close" label="Batal" tone="ghost" size="sm" onClick={props.onCancel} />}
+      </div>
+      {error && (
+        <p className="adm-status error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Feature list inside the project form: add new ones, remove old ones (their tasks stay). */
+function FeatureManager(props: { projectId: number; features: BoardFeature[]; taskCount: (id: number) => number; api: Api; onChange: FeaturesUpdate }) {
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [error, setError] = useState('');
+
+  const remove = async (f: BoardFeature) => {
+    setBusyId(f.id);
+    setError('');
+    try {
+      await props.api('DELETE', `/board/features/${f.id}`);
+      props.onChange((list) => list.filter((x) => x.id !== f.id));
+    } catch (err) {
+      setError(msg(err));
+    }
+    setBusyId(null);
+  };
+
+  return (
+    <fieldset className="ft-manage">
+      <legend>Fitur</legend>
+      {props.features.length > 0 ? (
+        <ul className="ft-chips">
+          {props.features.map((f) => (
+            <li key={f.id}>
+              <span>{f.name}</span>
+              <span className="ft-n">{props.taskCount(f.id)}</span>
+              <IconButton
+                icon="close"
+                label={`Hapus fitur ${f.name} (task-nya tetap ada)`}
+                tone="ghost"
+                size="sm"
+                busy={busyId === f.id}
+                onClick={() => remove(f)}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="ft-empty">Belum ada fitur.</p>
+      )}
+      <NewFeature projectId={props.projectId} api={props.api} onCreated={(f) => props.onChange((list) => [...list, f].sort(byName))} />
+      {error && (
+        <p className="adm-status error" role="alert">
+          {error}
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
+type LinkRow = BoardLink & { key: number };
+
+let linkKey = 0;
+const toRows = (links: BoardLink[]): LinkRow[] => links.map((l) => ({ ...l, key: ++linkKey }));
+
+/** "https://www.github.com/me/repo" reads as "github.com/me/repo". */
+const shortUrl = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+
+/** Rows of URL + optional label; empty rows are dropped on save. */
+function LinksEditor({ rows, onChange }: { rows: LinkRow[]; onChange: (rows: LinkRow[]) => void }) {
+  const set = (key: number, patch: Partial<BoardLink>) => onChange(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  return (
+    <fieldset className="ln-edit">
+      <legend>Link</legend>
+      {rows.length === 0 && <p className="ft-empty">Belum ada link.</p>}
+      {rows.map((r, i) => (
+        <div key={r.key} className="ln-row">
+          <input
+            aria-label={`URL link ${i + 1}`}
+            placeholder="github.com/nama/repo"
+            inputMode="url"
+            value={r.url}
+            maxLength={BOARD_LIMITS.linkUrl}
+            onChange={(e) => set(r.key, { url: e.target.value })}
+          />
+          <input
+            aria-label={`Label link ${i + 1} (opsional)`}
+            placeholder="Label (opsional)"
+            value={r.label}
+            maxLength={BOARD_LIMITS.linkLabel}
+            onChange={(e) => set(r.key, { label: e.target.value })}
+          />
+          <IconButton icon="close" label={`Hapus link ${i + 1}`} tone="ghost" size="sm" onClick={() => onChange(rows.filter((x) => x.key !== r.key))} />
+        </div>
+      ))}
+      {rows.length < BOARD_LIMITS.linksPerProject && (
+        <IconButton
+          icon="plus"
+          label="Tambah link"
+          size="sm"
+          className="ln-add"
+          onClick={() => onChange([...rows, { label: '', url: '', key: ++linkKey }])}
+        />
+      )}
+    </fieldset>
+  );
+}
+
 function ProjectForm(props: {
   project: BoardProject | null;
   taskCount: number;
+  features: BoardFeature[];
+  featureTaskCount: (id: number) => number;
+  onFeaturesChange: FeaturesUpdate;
   api: Api;
   onSaved: (p: BoardProject) => void;
   onDeleted: (id: number) => void;
@@ -122,6 +278,7 @@ function ProjectForm(props: {
   const [title, setTitle] = useState(p?.title ?? '');
   const [kind, setKind] = useState<BoardKind>(p?.kind ?? 'Freelance');
   const [description, setDescription] = useState(p?.description ?? '');
+  const [linkRows, setLinkRows] = useState(() => toRows(p?.links ?? []));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const ids = { title: useId(), desc: useId(), kind: useId() };
@@ -129,12 +286,15 @@ function ProjectForm(props: {
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return setError('Nama project wajib diisi.');
+    const filled = linkRows.filter((r) => r.url.trim() || r.label.trim());
+    if (filled.some((r) => !r.url.trim())) return setError('Setiap link yang punya label juga perlu URL.');
+    const links = filled.map(({ label, url }) => ({ label, url }));
     setBusy(true);
     setError('');
     try {
       const res = p
-        ? await props.api<{ project: BoardProject }>('PATCH', `/board/projects/${p.id}`, { title, kind, description })
-        : await props.api<{ project: BoardProject }>('POST', '/board/projects', { title, kind, description });
+        ? await props.api<{ project: BoardProject }>('PATCH', `/board/projects/${p.id}`, { title, kind, description, links })
+        : await props.api<{ project: BoardProject }>('POST', '/board/projects', { title, kind, description, links });
       props.onSaved(res.project);
     } catch (err) {
       setError(msg(err));
@@ -174,6 +334,18 @@ function ProjectForm(props: {
           <label htmlFor={ids.desc}>Keterangan (opsional)</label>
           <textarea id={ids.desc} rows={4} value={description} maxLength={BOARD_LIMITS.description} onChange={(e) => setDescription(e.target.value)} />
         </div>
+        <LinksEditor rows={linkRows} onChange={setLinkRows} />
+        {p ? (
+          <FeatureManager
+            projectId={p.id}
+            features={props.features}
+            taskCount={props.featureTaskCount}
+            api={props.api}
+            onChange={props.onFeaturesChange}
+          />
+        ) : (
+          <p className="ft-hint">Fitur bisa ditambahkan setelah project dibuat.</p>
+        )}
         <FormActions
           busy={busy}
           isNew={!p}
@@ -201,6 +373,11 @@ function TaskForm(props: {
   onDeleted: (id: number) => void;
   onAddProject: () => void;
   onClose: () => void;
+  /** Features of the task's project, offered in the Fitur dropdown. */
+  features: BoardFeature[];
+  onFeatureCreated: (f: BoardFeature) => void;
+  /** Feature to preselect for a new task, e.g. the one the page is filtered by. */
+  featureId?: number | null;
   /** Inside a project's page the project is set and not shown as a choice. */
   fixed?: boolean;
 }) {
@@ -208,9 +385,12 @@ function TaskForm(props: {
   const [title, setTitle] = useState(t?.title ?? '');
   const [projectId, setProjectId] = useState<number | ''>(t?.projectId ?? props.projectId ?? props.projects[0]?.id ?? '');
   const [status, setStatus] = useState<BoardStatus>(t?.status ?? props.status);
+  const [featureId, setFeatureId] = useState<number | null>(t ? t.featureId : (props.featureId ?? null));
+  const [addingFeature, setAddingFeature] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const ids = { title: useId(), project: useId(), status: useId() };
+  const ids = { title: useId(), project: useId(), status: useId(), feature: useId() };
+  const features = props.features.filter((f) => f.projectId === projectId);
 
   if (props.projects.length === 0) {
     return (
@@ -218,9 +398,7 @@ function TaskForm(props: {
         <p className="kb-note">Belum ada project. Buat project dulu, lalu tambahkan task ke dalamnya.</p>
         <div className="kb-dialog-actions">
           <span />
-          <button type="button" className="btn p" onClick={props.onAddProject}>
-            + Add project
-          </button>
+          <IconButton icon="plus" label="Add project" tone="p" onClick={props.onAddProject} />
         </div>
       </Modal>
     );
@@ -235,11 +413,11 @@ function TaskForm(props: {
     try {
       let res: { task: BoardTask };
       if (t) {
-        const patch: Record<string, unknown> = { title, projectId };
+        const patch: Record<string, unknown> = { title, projectId, featureId };
         if (status !== t.status) patch.status = status;
         res = await props.api('PATCH', `/board/tasks/${t.id}`, patch);
       } else {
-        res = await props.api('POST', '/board/tasks', { title, projectId, status });
+        res = await props.api('POST', '/board/tasks', { title, projectId, status, featureId });
       }
       props.onSaved(res.task);
     } catch (err) {
@@ -271,7 +449,14 @@ function TaskForm(props: {
           <div className="adm-field">
             <label htmlFor={ids.project}>Project</label>
             <span className="adm-select">
-              <select id={ids.project} value={projectId} onChange={(e) => setProjectId(Number(e.target.value))}>
+              <select
+                id={ids.project}
+                value={projectId}
+                onChange={(e) => {
+                  setProjectId(Number(e.target.value));
+                  setFeatureId(null);
+                }}
+              >
                 {props.projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title} · {p.kind}
@@ -279,6 +464,44 @@ function TaskForm(props: {
                 ))}
               </select>
             </span>
+          </div>
+        )}
+        {projectId !== '' && (
+          <div className="adm-field">
+            <label htmlFor={ids.feature}>Fitur</label>
+            {addingFeature ? (
+              <NewFeature
+                autoFocus
+                projectId={projectId}
+                api={props.api}
+                onCreated={(f) => {
+                  props.onFeatureCreated(f);
+                  setFeatureId(f.id);
+                  setAddingFeature(false);
+                }}
+                onCancel={() => setAddingFeature(false)}
+              />
+            ) : (
+              <span className="adm-select">
+                <select
+                  id={ids.feature}
+                  value={featureId ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === 'new') setAddingFeature(true);
+                    else setFeatureId(v === '' ? null : Number(v));
+                  }}
+                >
+                  <option value="">Tanpa fitur</option>
+                  {features.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                  <option value="new">+ Fitur baru…</option>
+                </select>
+              </span>
+            )}
           </div>
         )}
         <div className="adm-field">
@@ -309,11 +532,194 @@ function TaskForm(props: {
   );
 }
 
+const noteDate = (iso: string) =>
+  new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).format(
+    new Date(iso),
+  );
+
+function NoteItem(props: { note: BoardNote; api: Api; onSaved: (n: BoardNote) => void; onDeleted: (id: number) => void }) {
+  const n = props.note;
+  const [mode, setMode] = useState<'read' | 'edit' | 'confirm'>('read');
+  const [draft, setDraft] = useState(n.body);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const editId = useId();
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!draft.trim()) return setError('Note tidak boleh kosong.');
+    setBusy(true);
+    setError('');
+    try {
+      const res = await props.api<{ note: BoardNote }>('PATCH', `/board/notes/${n.id}`, { body: draft });
+      props.onSaved(res.note);
+      setMode('read');
+    } catch (err) {
+      setError(msg(err));
+    }
+    setBusy(false);
+  };
+
+  const remove = async () => {
+    setBusy(true);
+    try {
+      await props.api('DELETE', `/board/notes/${n.id}`);
+      props.onDeleted(n.id);
+    } catch (err) {
+      setError(msg(err));
+      setBusy(false);
+    }
+  };
+
+  const edited = n.updatedAt !== n.createdAt;
+
+  return (
+    <li className="nt-item">
+      <div className="nt-meta">
+        <time dateTime={n.createdAt}>{noteDate(n.createdAt)}</time>
+        {edited && <span title={`Diubah ${noteDate(n.updatedAt)}`}>· diubah</span>}
+        {mode === 'read' && (
+          <span className="nt-tools">
+            <IconButton
+              icon="pencil"
+              label="Edit note"
+              tone="ghost"
+              size="sm"
+              onClick={() => {
+                setDraft(n.body);
+                setMode('edit');
+              }}
+            />
+            <IconButton icon="trash" label="Hapus note" tone="ghost" size="sm" className="danger" onClick={() => setMode('confirm')} />
+          </span>
+        )}
+      </div>
+      {mode === 'edit' ? (
+        <form className="nt-form" onSubmit={save}>
+          <label className="sr-only" htmlFor={editId}>
+            Edit note
+          </label>
+          <textarea
+            id={editId}
+            autoFocus
+            rows={5}
+            value={draft}
+            maxLength={BOARD_LIMITS.noteBody}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save(e);
+              if (e.key === 'Escape') {
+                e.stopPropagation();
+                e.preventDefault();
+                setMode('read');
+              }
+            }}
+          />
+          <div className="nt-actions">
+            <IconButton icon="close" label="Batal" size="sm" onClick={() => setMode('read')} />
+            <IconButton type="submit" icon="check" label="Simpan" tone="p" size="sm" busy={busy} />
+          </div>
+        </form>
+      ) : (
+        <p className="nt-body">{n.body}</p>
+      )}
+      {mode === 'confirm' && (
+        <div className="nt-confirm" role="group" aria-label="Konfirmasi hapus note">
+          <span>Hapus note ini?</span>
+          <IconButton icon="close" label="Batal" size="sm" autoFocus disabled={busy} onClick={() => setMode('read')} />
+          <IconButton icon="trash" label="Hapus" tone="del" size="sm" busy={busy} onClick={remove} />
+        </div>
+      )}
+      {error && (
+        <p className="adm-status error" role="alert">
+          {error}
+        </p>
+      )}
+    </li>
+  );
+}
+
+/** Notes of one project: write a new one at the top, read and edit the rest below, newest first. */
+function NotesDialog(props: {
+  project: BoardProject;
+  notes: BoardNote[];
+  api: Api;
+  onChange: (update: (notes: BoardNote[]) => BoardNote[]) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const inputId = useId();
+
+  const add = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!draft.trim()) return setError('Tulis note dulu.');
+    setBusy(true);
+    setError('');
+    try {
+      const res = await props.api<{ note: BoardNote }>('POST', `/board/projects/${props.project.id}/notes`, { body: draft });
+      props.onChange((list) => [res.note, ...list]);
+      setDraft('');
+    } catch (err) {
+      setError(msg(err));
+    }
+    setBusy(false);
+  };
+
+  return (
+    <Modal title={`Notes · ${props.project.title}`} onClose={props.onClose} wide>
+      <form className="nt-form" onSubmit={add}>
+        <label className="sr-only" htmlFor={inputId}>
+          Note baru
+        </label>
+        <textarea
+          id={inputId}
+          autoFocus
+          rows={4}
+          placeholder="Tulis note… (Ctrl/⌘ + Enter untuk menyimpan)"
+          value={draft}
+          maxLength={BOARD_LIMITS.noteBody}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.metaKey || e.ctrlKey) && add(e)}
+        />
+        <div className="nt-actions">
+          <span className="nt-count">
+            {props.notes.length} {props.notes.length === 1 ? 'note' : 'notes'}
+          </span>
+          <IconButton type="submit" icon="plus" label="Tambah note" tone="p" busy={busy} />
+        </div>
+        {error && (
+          <p className="adm-status error" role="alert">
+            {error}
+          </p>
+        )}
+      </form>
+      {props.notes.length === 0 ? (
+        <p className="nt-empty">Belum ada note untuk project ini.</p>
+      ) : (
+        <ol className="nt-list">
+          {props.notes.map((n) => (
+            <NoteItem
+              key={n.id}
+              note={n}
+              api={props.api}
+              onSaved={(saved) => props.onChange((list) => list.map((x) => (x.id === saved.id ? saved : x)))}
+              onDeleted={(id) => props.onChange((list) => list.filter((x) => x.id !== id))}
+            />
+          ))}
+        </ol>
+      )}
+    </Modal>
+  );
+}
+
 /* ------------------------------------------------------------------ list and detail */
 
 type Dialog =
   | { type: 'project'; project: BoardProject | null }
-  | { type: 'task'; task: BoardTask | null; status: BoardStatus };
+  | { type: 'task'; task: BoardTask | null; status: BoardStatus }
+  | { type: 'notes' };
 
 /** Share of a project's tasks that are done, as a whole percent; null when it has none. */
 function progressOf(tasks: BoardTask[]) {
@@ -349,9 +755,7 @@ function ProjectList(props: { projects: BoardProject[]; tasks: BoardTask[]; onOp
     return (
       <div className="pj-empty">
         <p>Belum ada project.</p>
-        <button type="button" className="btn p" onClick={props.onAdd}>
-          + Add project
-        </button>
+        <IconButton icon="plus" label="Add project" tone="p" onClick={props.onAdd} />
       </div>
     );
   }
@@ -413,6 +817,12 @@ export default function ProjectBoard(props: {
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [dragId, setDragId] = useState<number | null>(null);
   const [drop, setDrop] = useState<{ status: BoardStatus; before: number | null } | null>(null);
+  /** Feature the columns are narrowed to: an id, 'none' for tasks without one, or null for all. */
+  const [featureFilter, setFeatureFilter] = useState<number | 'none' | null>(null);
+  const filterId = useId();
+
+  // Each project page starts with all its tasks shown.
+  useEffect(() => setFeatureFilter(null), [props.openId]);
 
   const api: Api = async (method, path, body) => {
     try {
@@ -458,9 +868,7 @@ export default function ProjectBoard(props: {
         {loadError ? (
           <div className="adm-error" role="alert">
             <p>Data project tidak bisa dimuat: {loadError}</p>
-            <button type="button" className="btn g" onClick={() => setAttempt((n) => n + 1)}>
-              Coba lagi
-            </button>
+            <IconButton icon="retry" label="Coba lagi" onClick={() => setAttempt((n) => n + 1)} />
           </div>
         ) : (
           <p className="adm-status busy" role="status">
@@ -479,9 +887,7 @@ export default function ProjectBoard(props: {
   const errorBox = error && (
     <div className="adm-error kb-error" role="alert">
       <p>{error}</p>
-      <button type="button" className="navb" onClick={() => setError('')}>
-        Tutup
-      </button>
+      <IconButton icon="close" label="Tutup" tone="ghost" size="sm" onClick={() => setError('')} />
     </div>
   );
 
@@ -492,6 +898,22 @@ export default function ProjectBoard(props: {
           key={dialog.project?.id ?? 'new'}
           project={dialog.project}
           taskCount={dialog.project ? countFor(dialog.project.id) : 0}
+          features={dialog.project ? board.features.filter((f) => f.projectId === dialog.project!.id) : []}
+          featureTaskCount={(id) => tasks.filter((t) => t.featureId === id).length}
+          onFeaturesChange={(update) =>
+            setBoard((b) => {
+              if (!b || !dialog.project) return b;
+              const pid = dialog.project.id;
+              const mine = update(b.features.filter((f) => f.projectId === pid));
+              const kept = new Set(mine.map((f) => f.id));
+              return {
+                ...b,
+                features: [...b.features.filter((f) => f.projectId !== pid), ...mine],
+                // Tasks of a removed feature stay, without it, as the database does.
+                tasks: b.tasks.map((t) => (t.projectId === pid && t.featureId !== null && !kept.has(t.featureId) ? { ...t, featureId: null } : t)),
+              };
+            })
+          }
           api={api}
           onSaved={(p) => {
             const isNew = !projects.some((x) => x.id === p.id);
@@ -505,11 +927,34 @@ export default function ProjectBoard(props: {
             if (isNew) props.onOpen(p.id);
           }}
           onDeleted={(id) => {
-            // Tasks go with their project, as the database cascade does.
-            setBoard((b) => b && { projects: b.projects.filter((x) => x.id !== id), tasks: b.tasks.filter((t) => t.projectId !== id) });
+            // Tasks and notes go with their project, as the database cascade does.
+            setBoard(
+              (b) =>
+                b && {
+                  projects: b.projects.filter((x) => x.id !== id),
+                  features: b.features.filter((f) => f.projectId !== id),
+                  tasks: b.tasks.filter((t) => t.projectId !== id),
+                  notes: b.notes.filter((n) => n.projectId !== id),
+                },
+            );
             setDialog(null);
             props.onOpen(null);
           }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog?.type === 'notes' && project && (
+        <NotesDialog
+          project={project}
+          notes={board.notes.filter((n) => n.projectId === project.id)}
+          api={api}
+          onChange={(update) =>
+            setBoard((b) => {
+              if (!b) return b;
+              const mine = update(b.notes.filter((n) => n.projectId === project.id));
+              return { ...b, notes: [...mine, ...b.notes.filter((n) => n.projectId !== project.id)] };
+            })
+          }
           onClose={() => setDialog(null)}
         />
       )}
@@ -521,6 +966,9 @@ export default function ProjectBoard(props: {
           projectId={project.id}
           projects={[project]}
           fixed
+          features={board.features}
+          featureId={featureFilter !== null && featureFilter !== 'none' ? featureFilter : null}
+          onFeatureCreated={(f) => setBoard((b) => b && { ...b, features: [...b.features, f].sort(byName) })}
           api={api}
           onSaved={(t) => {
             const old = tasks.find((x) => x.id === t.id);
@@ -545,9 +993,7 @@ export default function ProjectBoard(props: {
         {head(
           'Project',
           projects.length > 0 && (
-            <button type="button" className="btn p" onClick={() => setDialog({ type: 'project', project: null })}>
-              + Add project
-            </button>
+            <IconButton icon="plus" label="Add project" tone="p" onClick={() => setDialog({ type: 'project', project: null })} />
           ),
         )}
         {props.openId !== null && (
@@ -564,6 +1010,12 @@ export default function ProjectBoard(props: {
 
   /* ---------------------------------------------------------------- detail */
   const own = tasks.filter((t) => t.projectId === project.id);
+  const projectFeatures = board.features.filter((f) => f.projectId === project.id);
+  const featureName = new Map(projectFeatures.map((f) => [f.id, f.name]));
+  const activeFeature = featureFilter === 'none' || (featureFilter !== null && featureName.has(featureFilter)) ? featureFilter : null;
+  const shown =
+    activeFeature === null ? own : own.filter((t) => (activeFeature === 'none' ? t.featureId === null : t.featureId === activeFeature));
+  const noteCount = board.notes.filter((n) => n.projectId === project.id).length;
 
   /* Dragging: the drop position is worked out from the pointer against the cards' middles. */
   const onDragOver = (status: BoardStatus) => (e: DragEvent<HTMLDivElement>) => {
@@ -600,6 +1052,8 @@ export default function ProjectBoard(props: {
     <>
       <a
         className="pj-back"
+        aria-label="Semua project"
+        title="Semua project"
         href="/mydashboard/project"
         onClick={(e) => {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
@@ -607,7 +1061,7 @@ export default function ProjectBoard(props: {
           props.onOpen(null);
         }}
       >
-        ← Semua project
+        <Glyph name="back" />
       </a>
 
       <section className="pj-hero" aria-label="Detail project">
@@ -619,21 +1073,77 @@ export default function ProjectBoard(props: {
             <h1>{project.title}</h1>
             <span className={`kb-kind ${project.kind.toLowerCase()}`}>{project.kind}</span>
           </div>
+          {(project.links ?? []).length > 0 && (
+            <ul className="pj-links" aria-label="Link project">
+              {project.links.map((l, i) => (
+                <li key={`${l.url}-${i}`}>
+                  <a href={l.url} target="_blank" rel="noreferrer" title={l.url}>
+                    <Glyph name="link" />
+                    <span>{l.label || shortUrl(l.url)}</span>
+                    <span className="pj-link-go" aria-hidden="true">
+                      ↗
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
           {project.description && <p className="pj-hero-desc">{project.description}</p>}
         </div>
         <div className="pj-hero-side">
           <Progress tasks={own} large />
-          <button type="button" className="btn g" onClick={() => setDialog({ type: 'project', project })}>
-            Edit project
-          </button>
+          <div className="pj-hero-actions">
+            <span className="pj-notes">
+              <IconButton
+                icon="note"
+                label={`Notes, ${noteCount} ${noteCount === 1 ? 'note' : 'notes'}`}
+                onClick={() => setDialog({ type: 'notes' })}
+              />
+              {noteCount > 0 && (
+                <span className="pj-notes-n" aria-hidden="true">
+                  {noteCount}
+                </span>
+              )}
+            </span>
+            <IconButton icon="pencil" label="Edit project" onClick={() => setDialog({ type: 'project', project })} />
+          </div>
         </div>
       </section>
 
       {errorBox}
 
+      <div className="pj-toolbar">
+        <div className="pj-filter">
+          <label htmlFor={filterId}>Fitur</label>
+          <span className="adm-select">
+            <select
+              id={filterId}
+              value={activeFeature ?? ''}
+              onChange={(e) => {
+                const v = e.target.value;
+                setFeatureFilter(v === '' ? null : v === 'none' ? 'none' : Number(v));
+              }}
+            >
+              <option value="">Semua fitur ({own.length})</option>
+              {projectFeatures.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name} ({own.filter((t) => t.featureId === f.id).length})
+                </option>
+              ))}
+              <option value="none">Tanpa fitur ({own.filter((t) => t.featureId === null).length})</option>
+            </select>
+          </span>
+        </div>
+        {activeFeature !== null && (
+          <p className="pj-filter-note" role="status">
+            Menampilkan {shown.length} dari {own.length} task
+          </p>
+        )}
+      </div>
+
       <div className="kb">
         {boardStatuses.map((status) => {
-          const list = own.filter((t) => t.status === status);
+          const list = shown.filter((t) => t.status === status);
           const isTarget = drop?.status === status;
           const add = () => setDialog({ type: 'task', task: null, status });
           return (
@@ -643,9 +1153,7 @@ export default function ProjectBoard(props: {
                   {list.length}
                 </span>
                 <span className="kb-pill">{statusLabel[status]}</span>
-                <button type="button" className="kb-plus" onClick={add} aria-label={`Tambah task ke ${statusLabel[status]}`}>
-                  +
-                </button>
+                <IconButton icon="plus" label={`Tambah task ke ${statusLabel[status]}`} size="sm" className="kb-plus" onClick={add} />
               </header>
               <div
                 className="kb-list"
@@ -680,15 +1188,16 @@ export default function ProjectBoard(props: {
                       }}
                     >
                       <span className={`kb-check ${status}`} aria-hidden="true" />
-                      <span className="kb-title">{t.title}</span>
+                      <span className="kb-body">
+                        <span className="kb-title">{t.title}</span>
+                        {t.featureId !== null && featureName.has(t.featureId) && <span className="kb-feature">{featureName.get(t.featureId)}</span>}
+                      </span>
                     </div>
                   </div>
                 ))}
                 {isTarget && drop.before === null && <div className="kb-drop" aria-hidden="true" />}
                 {list.length === 0 && <p className="kb-empty">Belum ada task</p>}
-                <button type="button" className="kb-add" onClick={add}>
-                  + New
-                </button>
+                <IconButton icon="plus" label={`Tambah task ke ${statusLabel[status]}`} tone="ghost" size="sm" className="kb-add" onClick={add} />
               </div>
             </section>
           );

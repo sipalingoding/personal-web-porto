@@ -7,6 +7,7 @@ import type { Experience } from '../data/experience';
 import { disciplines, kinds, type Project } from '../data/projects';
 import { site } from '../data/site';
 import { useTheme } from '../hooks/useTheme';
+import { IconButton } from '../dashboard/icons';
 import StackPicker from './StackPicker';
 import './admin.css';
 
@@ -735,7 +736,8 @@ function ExperienceSection({ adminKey, initial }: { adminKey: string; initial: E
 
 /* ------------------------------------------------------------------ page */
 
-export function KeyGate({ onUnlock }: { onUnlock: (key: string) => void }) {
+/** `iconOnly` shows the submit as an icon button, as the dashboard does. */
+export function KeyGate({ onUnlock, iconOnly = false }: { onUnlock: (key: string) => void; iconOnly?: boolean }) {
   const [key, setKey] = useState('');
   const [status, setStatus] = useState<Status>(idle);
   const id = useId();
@@ -766,9 +768,13 @@ export function KeyGate({ onUnlock }: { onUnlock: (key: string) => void }) {
         <p className={`adm-status ${status.kind}`} role="status">
           {status.text}
         </p>
-        <button type="submit" className="btn p" disabled={status.kind === 'busy'}>
-          {status.kind === 'busy' ? 'Checking…' : 'Unlock'}
-        </button>
+        {iconOnly ? (
+          <IconButton type="submit" icon="unlock" label="Unlock" tone="p" busy={status.kind === 'busy'} />
+        ) : (
+          <button type="submit" className="btn p" disabled={status.kind === 'busy'}>
+            {status.kind === 'busy' ? 'Checking…' : 'Unlock'}
+          </button>
+        )}
       </div>
     </form>
   );

@@ -110,3 +110,29 @@ alter table board_tasks drop column if exists done;
 
 drop index if exists board_tasks_project_idx;
 create index if not exists board_tasks_status_idx on board_tasks (status, position);
+
+-- Notes on a board project, shown in the notes dialog on its page.
+create table if not exists board_notes (
+  id serial primary key,
+  project_id integer not null references board_projects (id) on delete cascade,
+  body text not null check (length(body) between 1 and 5000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists board_notes_project_idx on board_notes (project_id, created_at desc);
+
+-- Features of a board project; a task can belong to one. Removing a feature keeps its tasks.
+create table if not exists board_features (
+  id serial primary key,
+  project_id integer not null references board_projects (id) on delete cascade,
+  name text not null check (length(name) between 1 and 60),
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists board_features_name_idx on board_features (project_id, lower(name));
+
+alter table board_tasks add column if not exists feature_id integer references board_features (id) on delete set null;
+
+-- Links on a board project, as a list of { label, url }, shown under its name.
+alter table board_projects add column if not exists links jsonb not null default '[]'::jsonb;

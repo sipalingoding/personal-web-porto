@@ -15,13 +15,22 @@ export const statusLabel: Record<BoardStatus, string> = {
 export const boardKinds = ['Professional', 'Freelance'] as const;
 export type BoardKind = (typeof boardKinds)[number];
 
-export type BoardProject = { id: number; title: string; kind: BoardKind; description: string };
+/** A link on a project (repo, live site, design file…); the label is optional. */
+export type BoardLink = { label: string; url: string };
 
-export type BoardTask = { id: number; projectId: number; title: string; status: BoardStatus };
+export type BoardProject = { id: number; title: string; kind: BoardKind; description: string; links: BoardLink[] };
 
-export type Board = { projects: BoardProject[]; tasks: BoardTask[] };
+/** A feature of a project (e.g. "Login"), used to group its tasks. */
+export type BoardFeature = { id: number; projectId: number; name: string };
+
+export type BoardTask = { id: number; projectId: number; featureId: number | null; title: string; status: BoardStatus };
+
+/** A dated note on a project, read and written in the notes dialog. */
+export type BoardNote = { id: number; projectId: number; body: string; createdAt: string; updatedAt: string };
+
+export type Board = { projects: BoardProject[]; features: BoardFeature[]; tasks: BoardTask[]; notes: BoardNote[] };
 
 /** Task ids per column, top to bottom. */
 export type BoardOrder = Record<BoardStatus, number[]>;
 
-export const BOARD_LIMITS = { projectTitle: 120, description: 2000, taskTitle: 200, projects: 200, tasks: 2000 } as const;
+export const BOARD_LIMITS = { projectTitle: 120, description: 2000, taskTitle: 200, noteBody: 5000, featureName: 60, linkLabel: 60, linkUrl: 500, linksPerProject: 20, featuresPerProject: 100, projects: 200, tasks: 2000, notesPerProject: 500 } as const;

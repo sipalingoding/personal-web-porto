@@ -204,7 +204,7 @@ export default function Dashboard() {
             <b>/</b>mydashboard
           </span>
           <h1>My dashboard</h1>
-          <KeyGate onUnlock={unlock} />
+          <KeyGate onUnlock={unlock} iconOnly />
         </main>
       </div>
     );
