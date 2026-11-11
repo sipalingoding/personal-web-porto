@@ -12,7 +12,9 @@ export type Face = { k: 'poly'; m: string; f: 't' | 'l' | 'r'; points: string };
 export type PathShape = { k: 'path'; m: string; f: 't' | 'l' | 'r'; d: string };
 /** Ellipse: cylinder tops, rugs, soft shadows and light pools. */
 export type Oval = { k: 'oval'; m: string; f: 't' | 'l' | 'r'; cx: number; cy: number; rx: number; ry: number };
-export type Shape = Face | PathShape | Oval;
+/** A place in the drawing order where the page draws something of its own (the countdown text). */
+export type Slot = { k: 'slot'; name: 'countdown'; matrix: string; w: number; h: number };
+export type Shape = Face | PathShape | Oval | Slot;
 
 const COS = Math.cos(Math.PI / 6);
 const proj = (x: number, y: number, z: number): [number, number] => [(x - y) * COS, (x + y) / 2 - z];
@@ -175,23 +177,40 @@ function cubicle(g: Layer, ox: number, oy: number, staff: Staff) {
   seated(g, ox + 38, oy, staff);
 }
 
-/** Someone walking along an aisle, facing +x (alongX) or +y. */
-function walker(g: Layer, x: number, y: number, shirt: string, hair: string, alongX: boolean) {
-  const [w, d] = alongX ? [9, 16] : [16, 9];
-  const at = (along: number, across: number): [number, number] => (alongX ? [x + along, y + across] : [x + across, y + along]);
+/**
+ * A member of staff doing the rounds. 'a' and 'b' are the two steps of a walk along +x;
+ * 'look' stands still facing -y, into the cubicle in front of them, hands behind the back.
+ */
+type Pose = 'a' | 'b' | 'look';
+
+function walker(g: Layer, x: number, y: number, shirt: string, hair: string, pose: Pose) {
+  const look = pose === 'look';
+  // Depth along the facing direction, width across it.
+  const [w, d] = look ? [16, 9] : [9, 16];
   g.oval('m-shadow', x + w / 2, y + d / 2, 0.4, 14);
-  // Legs mid-stride: one ahead, one behind.
-  const [f1x, f1y] = at(4, 2);
-  const [f2x, f2y] = at(-1, 9);
-  g.box('m-shoe', f2x, f2y, 0, alongX ? 8 : 6, alongX ? 6 : 8, 3);
-  g.box('m-pants', f2x + 1, f2y + 0.5, 3, 5.5, 5, 37);
-  g.box('m-shoe', f1x, f1y, 0, alongX ? 8 : 6, alongX ? 6 : 8, 3);
-  g.box('m-pants', f1x + 1, f1y + 0.5, 3, 5.5, 5, 37);
-  const [a1x, a1y] = at(-2, -4.5);
-  const [a2x, a2y] = at(4, d);
-  g.box(shirt, a1x, a1y, 44, alongX ? 5 : 4.5, alongX ? 4.5 : 5, 25);
+  if (look) {
+    g.box('m-shoe', x + 1.5, y + 1, 0, 6, 8, 3);
+    g.box('m-shoe', x + 8.5, y + 1, 0, 6, 8, 3);
+    g.box('m-pants', x + 2, y + 2, 3, 5.5, 5.5, 37);
+    g.box('m-pants', x + 9, y + 2, 3, 5.5, 5.5, 37);
+    g.box(shirt, x - 4, y + 2, 46, 4.5, 5, 25);
+    g.box(shirt, x, y, 39, w, d, 35);
+    g.box(shirt, x + 15.5, y + 2, 46, 4.5, 5, 25);
+    g.box('m-skin', x + 5.5, y + 2, 74, 5, 5, 4);
+    g.ball('m-skin', x + 8, y + 4.5, 86, 8);
+    // Seen from behind: the hair covers the head.
+    g.ball(hair, x + 8, y + 5.5, 87.5, 8.2);
+    return;
+  }
+  // Legs and arms swing the opposite way on each step.
+  const s = pose === 'a' ? 1 : -1;
+  g.box('m-shoe', x + 0.5 - 2.5 * s, y + 9, 0, 8, 6, 3);
+  g.box('m-pants', x + 1.5 - 2.5 * s, y + 9.5, 3, 5.5, 5, 37);
+  g.box('m-shoe', x + 0.5 + 2.5 * s, y + 2, 0, 8, 6, 3);
+  g.box('m-pants', x + 1.5 + 2.5 * s, y + 2.5, 3, 5.5, 5, 37);
+  g.box(shirt, x + 2 + 2 * s, y - 4.5, 44, 5, 4.5, 25);
   g.box(shirt, x, y, 39, w, d, 35);
-  g.box(shirt, a2x, a2y, 44, alongX ? 5 : 4.5, alongX ? 4.5 : 5, 25);
+  g.box(shirt, x + 2 - 2 * s, y + d, 44, 5, 4.5, 25);
   g.box('m-skin', x + w / 2 - 2.5, y + d / 2 - 2.5, 74, 5, 5, 4);
   g.ball('m-skin', x + w / 2, y + d / 2, 86, 8);
   g.ball(hair, x + w / 2 - 1, y + d / 2 - 1, 89, 7.6);
@@ -217,6 +236,38 @@ function lounge(g: Layer, x: number, y: number) {
   g.box('m-book2', x - 10, y + 1, 24.5, 11, 8, 2);
   g.oval('m-shadow', x - 24, y + 24, 0.8, 13);
   g.cyl('m-stool', x - 24, y + 24, 0, 11, 18, 'm-stooltop');
+}
+
+/**
+ * A wall at the back right of the floor, facing +y like the staff at their desks, with a
+ * screen mounted on it and a low cabinet below. The slot maps a flat w × h area onto the
+ * screen (origin top left, y down) so the page can write on it.
+ */
+const WALL_W = 160;
+const WALL_H = 150;
+const SCREEN_W = 140;
+const SCREEN_H = 70;
+
+function screenWall(g: Layer, x: number, y: number) {
+  const face = y + 6;
+  g.box('m-wall', x, y, 0, WALL_W, 6, WALL_H);
+  g.box('m-trim', x, y, WALL_H, WALL_W, 6, 1.5, 't');
+  // Cabinet under the screen, with a plant and a few books on it.
+  g.oval('m-shadow', x + WALL_W / 2, face + 10, 0.4, 44);
+  g.box('m-cab', x + 26, face, 0, WALL_W - 52, 18, 30);
+  g.quad('m-cabline', 'l', [[x + WALL_W / 2 - 0.4, face + 18.1, 3], [x + WALL_W / 2 + 0.4, face + 18.1, 3], [x + WALL_W / 2 + 0.4, face + 18.1, 27], [x + WALL_W / 2 - 0.4, face + 18.1, 27]]);
+  g.cyl('m-pot', x + 40, face + 9, 30, 5, 9, 'm-soil');
+  g.leaves(x + 40, face + 9, 46, 1);
+  g.box('m-book', x + WALL_W - 52, face + 3, 30, 16, 11, 3);
+  g.box('m-book3', x + WALL_W - 51, face + 4, 33, 14, 10, 3);
+  // The screen: a thin frame proud of the wall, the glass on its front.
+  const sx = x + (WALL_W - SCREEN_W) / 2;
+  const top = 136;
+  const bottom = top - SCREEN_H;
+  g.box('m-signframe', sx - 3, face, bottom - 3, SCREEN_W + 6, 3, SCREEN_H + 6);
+  g.quad('m-signscreen', 'l', [[sx, face + 3.1, bottom], [sx + SCREEN_W, face + 3.1, bottom], [sx + SCREEN_W, face + 3.1, top], [sx, face + 3.1, top]]);
+  const [ox, oy] = proj(sx, face + 3.2, top);
+  g.shapes.push({ k: 'slot', name: 'countdown', matrix: `matrix(${COS.toFixed(4)} 0.5 0 1 ${n(ox)} ${n(oy)})`, w: SCREEN_W, h: SCREEN_H });
 }
 
 /* ------------------------------------------------------------------ scene */
@@ -248,13 +299,21 @@ function order(items: Item[]): Item[] {
   return out;
 }
 
-export type Scene = { shapes: Shape[]; viewBox: string; width: number; height: number; anchors: { x: number; y: number }[] };
+/**
+ * Someone on their rounds: three poses drawn at the start of the route, and how far the
+ * route runs (in viewBox units) from there along +x. They are drawn after layer \`layer\`.
+ */
+export type Rounds = { poses: Record<Pose, Shape[]>; dx: number; dy: number; layer: number };
+
+/** Scenery split into layers, so people walking an aisle can be drawn between them. */
+export type Scene = { layers: Shape[][]; rounds: Rounds[]; viewBox: string; width: number; height: number; anchors: { x: number; y: number }[] };
 
 export function buildScene(): Scene {
   const g = new Layer();
   const x0 = -46;
   const y0 = -46;
-  const x1 = COLS * CUBE_W + (COLS - 1) * GAP + 46;
+  // Extra floor on the right for the screen wall.
+  const x1 = COLS * CUBE_W + (COLS - 1) * GAP + 150;
   const y1 = ROWS * CUBE_D + (ROWS - 1) * GAP + 120;
   g.box('m-plate', x0, y0, -10, x1 - x0, y1 - y0, 10);
   g.quad('m-plateline', 't', [[x0 + 6, y0 + 6, 0.2], [x1 - 6, y0 + 6, 0.2], [x1 - 6, y1 - 6, 0.2], [x0 + 6, y1 - 6, 0.2]]);
@@ -271,21 +330,53 @@ export function buildScene(): Scene {
     }
   }
   const add = (b: Bounds, draw: (l: Layer) => void) => items.push({ b, draw });
-  const person = (x: number, y: number, shirt: string, hair: string, alongX: boolean) =>
-    add({ minX: x - 6, maxX: x + 20, minY: y - 6, maxY: y + 20 }, (l) => walker(l, x, y, shirt, hair, alongX));
   const plant = (x: number, y: number, s = 1) => add({ minX: x - 8, maxX: x + 8, minY: y - 8, maxY: y + 8 }, (l) => floorPlant(l, x, y, s));
 
+  const wx = x1 - WALL_W - 4;
+  add({ minX: wx, maxX: wx + WALL_W, minY: y0, maxY: y0 + 30 }, (l) => screenWall(l, wx, y0));
   const lx = 100;
   const ly = y1 - 60;
   add({ minX: lx - 50, maxX: lx + 50, minY: ly - 50, maxY: ly + 50 }, (l) => lounge(l, lx, ly));
-  person(CUBE_W + GAP + 70, y1 - 78, 'm-shirt3', 'm-hair2', true);
-  person(2 * (CUBE_W + GAP) + 64, y1 - 64, 'm-shirt4', 'm-hair', true);
   plant(x0 + 16, y0 + 16, 1.2);
-  plant(x1 - 18, y0 + 16, 1.2);
   plant(x1 - 18, y1 - 22, 1.1);
+  plant(x1 - 44, CUBE_D + GAP / 2, 1.3);
   plant(CUBE_W + GAP - 26, y1 - 28, 0.9);
 
-  for (const it of order(items)) it.draw(g);
+  // Two aisles run along x: between the rows, and in front of the front row. Everything
+  // behind an aisle is drawn before the person walking it, everything in front after.
+  const midAisle = CUBE_D + GAP / 2 - 8;
+  const frontAisle = ROWS * CUBE_D + (ROWS - 1) * GAP + 14;
+  const cuts = [midAisle, frontAisle];
+  const layers: Shape[][] = [];
+  let rest = items;
+  for (const cut of [...cuts, Infinity]) {
+    const here = rest.filter((it) => it.b.maxY <= cut);
+    rest = rest.filter((it) => it.b.maxY > cut);
+    // The first layer also takes the floor plate drawn above.
+    const start = layers.length === 0 ? 0 : g.shapes.length;
+    for (const it of order(here)) it.draw(g);
+    layers.push(g.shapes.slice(start));
+  }
+
+  // Rounds: stop at one worker, walk to the next, stop, walk back.
+  const worker = (col: number) => col * (CUBE_W + GAP) + 50;
+  const rounds: Rounds[] = [
+    { y: midAisle, from: worker(0), to: worker(1), shirt: 'm-shirt3', hair: 'm-hair2', layer: 0 },
+    { y: frontAisle, from: worker(1), to: worker(2), shirt: 'm-shirt4', hair: 'm-hair', layer: 1 },
+  ].map((r) => {
+    const poses = {} as Record<Pose, Shape[]>;
+    for (const pose of ['a', 'b', 'look'] as const) {
+      const start = g.shapes.length;
+      walker(g, r.from, r.y, r.shirt, r.hair, pose);
+      poses[pose] = g.shapes.splice(start);
+    }
+    // Keep the far end of the route inside the picture's bounds.
+    const [ex, ey] = proj(r.to + 16, r.y + 16, 95);
+    g.pts.push([ex, ey], proj(r.to, r.y, 0));
+    const [x0p, y0p] = proj(r.from, r.y, 0);
+    const [x1p, y1p] = proj(r.to, r.y, 0);
+    return { poses, dx: x1p - x0p, dy: y1p - y0p, layer: r.layer };
+  });
 
   const xs = g.pts.map((p) => p[0]);
   const ys = g.pts.map((p) => p[1]);
@@ -299,7 +390,8 @@ export function buildScene(): Scene {
     return { x: ((ax - minX) / width) * 100, y: ((ay - minY) / height) * 100 };
   });
   return {
-    shapes: g.shapes,
+    layers,
+    rounds,
     viewBox: `${minX.toFixed(0)} ${minY.toFixed(0)} ${width.toFixed(0)} ${height.toFixed(0)}`,
     width,
     height,

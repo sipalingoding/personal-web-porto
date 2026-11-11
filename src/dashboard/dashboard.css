@@ -3008,3 +3008,245 @@
     display: none;
   }
 }
+
+/* ------------------------------------------------------------------ people doing the rounds
+   Each stops at a desk (facing into the cubicle), walks to the next desk, stops again,
+   then walks back. Steps alternate while walking, with a slight bob. */
+.iso-rounds {
+  animation: iso-route 18s ease-in-out infinite;
+}
+
+.iso-rounds.n1 {
+  animation-duration: 22s;
+  animation-delay: -9s;
+}
+
+.iso-walk,
+.iso-look {
+  animation: iso-walking 18s step-end infinite;
+}
+
+.iso-look {
+  animation-name: iso-looking;
+}
+
+.iso-rounds.n1 .iso-walk,
+.iso-rounds.n1 .iso-look {
+  animation-duration: 22s;
+  animation-delay: -9s;
+}
+
+.iso-step {
+  animation: iso-step 0.7s step-end infinite;
+}
+
+.iso-step.b {
+  animation-delay: -0.35s;
+}
+
+@keyframes iso-route {
+  0%,
+  20% {
+    transform: translate(0, 0);
+  }
+  44%,
+  62% {
+    transform: translate(var(--dx), var(--dy));
+  }
+  86%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes iso-looking {
+  0% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0;
+  }
+  44% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 0;
+  }
+  86% {
+    opacity: 1;
+  }
+}
+
+@keyframes iso-walking {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  44% {
+    opacity: 0;
+  }
+  62% {
+    opacity: 1;
+  }
+  86% {
+    opacity: 0;
+  }
+}
+
+@keyframes iso-step {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.iso-bob {
+  animation: iso-bob 0.35s ease-in-out infinite alternate;
+}
+
+@keyframes iso-bob {
+  to {
+    transform: translate(0, -1.2px);
+  }
+}
+
+/* Without motion they simply stand at their first desk. */
+@media (prefers-reduced-motion: reduce) {
+  .iso-rounds,
+  .iso-walk,
+  .iso-look,
+  .iso-step,
+  .iso-bob {
+    animation: none;
+  }
+
+  .iso-walk {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ bottom cards: compact type
+   The three cards under the office use a smaller, even scale: 16px titles, 13px names,
+   12px secondary text and numbers, 11px tags. */
+.hm-bottom .hm-card-hd h2 {
+  gap: 0.5rem;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.hm-bottom .hm-hd-ic svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.hm-bottom .hm-chip {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.hm-bottom .hm-prow,
+.hm-bottom .hm-trow {
+  gap: 0.75rem;
+}
+
+.hm-bottom .hm-init {
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.5625rem;
+  font-size: 0.75rem;
+}
+
+.hm-bottom .hm-prow-name b {
+  font-size: 0.8125rem;
+}
+
+.hm-bottom .hm-prow-name span {
+  font-size: 0.75rem;
+}
+
+.hm-bottom .hm-bar {
+  height: 0.375rem;
+}
+
+.hm-bottom .hm-num,
+.hm-bottom .hm-time {
+  font-size: 0.75rem;
+}
+
+.hm-bottom .hm-tag {
+  padding: 0.1875rem 0.5rem;
+  font-size: 0.6875rem;
+}
+
+.hm-bottom .hm-empty {
+  font-size: 0.8125rem;
+}
+
+.hm-bottom .hm-status span {
+  font-size: 0.8125rem;
+}
+
+.hm-bottom .hm-status b {
+  font-size: 1.25rem;
+}
+
+.hm-bottom .hm-status small {
+  font-size: 0.75rem;
+}
+
+@media (min-width: 1100px) and (min-height: 680px) {
+  .hm-bottom .hm-status li {
+    padding: 0 0.875rem;
+  }
+
+  .hm-bottom .hm-status small {
+    min-width: 3rem;
+  }
+}
+
+/* ------------------------------------------------------------------ year-end countdown screen */
+.iso .m-signframe { --b: #ffffff; }
+.iso .m-signscreen { fill: var(--iso-screen); stroke: #24366a; }
+:root:not(.light) .iso .m-signframe { --b: #3a4766; }
+
+.iso-count text {
+  font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  fill: #ffffff;
+}
+
+.iso-count-num {
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.iso-count-tx {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.iso-count-cap {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  opacity: 0.8;
+}
+
+.iso-count-face {
+  fill: none;
+  stroke: #9fc0ff;
+  stroke-width: 1.6;
+}
+
+.iso-count-hands {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
