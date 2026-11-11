@@ -23,7 +23,16 @@ export type BoardProject = { id: number; title: string; kind: BoardKind; descrip
 /** A feature of a project (e.g. "Login"), used to group its tasks. */
 export type BoardFeature = { id: number; projectId: number; name: string };
 
-export type BoardTask = { id: number; projectId: number; featureId: number | null; title: string; status: BoardStatus };
+/** createdAt is set when the task is added; doneAt when it moves to Selesai, and cleared if it moves out again. */
+export type BoardTask = {
+  id: number;
+  projectId: number;
+  featureId: number | null;
+  title: string;
+  status: BoardStatus;
+  createdAt: string;
+  doneAt: string | null;
+};
 
 /** A dated note on a project, read and written in the notes dialog. */
 export type BoardNote = { id: number; projectId: number; body: string; createdAt: string; updatedAt: string };

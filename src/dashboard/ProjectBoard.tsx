@@ -16,6 +16,7 @@ import {
   type BoardTask,
 } from '../data/board';
 import { Glyph, IconButton } from './icons';
+import { HomeTitle, HomeView } from './Home';
 
 type Api = <T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown) => Promise<T>;
 
@@ -36,7 +37,9 @@ function moveTask(tasks: BoardTask[], id: number, status: BoardStatus, beforeId:
   const task = tasks.find((t) => t.id === id);
   if (!task) return tasks;
   const rest = tasks.filter((t) => t.id !== id);
-  const moved = { ...task, status };
+  // Shown straight away; the server's time replaces it once the move is saved.
+  const doneAt = status !== 'done' ? null : task.status === 'done' ? task.doneAt : new Date().toISOString();
+  const moved = { ...task, status, doneAt };
   const at = beforeId === null ? -1 : rest.findIndex((t) => t.id === beforeId);
   if (at >= 0) return [...rest.slice(0, at), moved, ...rest.slice(at)];
   const last = rest.map((t) => t.status).lastIndexOf(status);
@@ -516,6 +519,7 @@ function TaskForm(props: {
             </select>
           </span>
         </div>
+        {t && <TaskTimes task={t} />}
         <FormActions
           busy={busy}
           isNew={!t}
@@ -529,6 +533,111 @@ function TaskForm(props: {
         />
       </form>
     </Modal>
+  );
+}
+
+/* ------------------------------------------------------------------ list view */
+
+type TaskView = 'board' | 'list';
+const VIEW_KEY = 'mydashboard.taskView';
+
+/** The chosen view is a per-browser convenience; storage may be blocked, so both calls are guarded. */
+function readView(): TaskView {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'board';
+  } catch {
+    return 'board';
+  }
+}
+
+function saveView(v: TaskView) {
+  try {
+    localStorage.setItem(VIEW_KEY, v);
+  } catch {
+    /* not saved; the page still switches */
+  }
+}
+
+const JKT = 'Asia/Jakarta';
+const dayKey = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: JKT }).format(new Date(iso));
+const dayTitle = (iso: string) =>
+  new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: JKT }).format(new Date(iso));
+const clock = (iso: string) => new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: JKT }).format(new Date(iso));
+
+/** Tasks newest first, grouped by the day they were added, like a commit history. */
+function TaskTable(props: { tasks: BoardTask[]; featureName: Map<number, string>; onOpen: (t: BoardTask) => void; onAdd: () => void }) {
+  const sorted = [...props.tasks].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id);
+  const days: { key: string; title: string; tasks: BoardTask[] }[] = [];
+  for (const t of sorted) {
+    const key = dayKey(t.createdAt);
+    const last = days[days.length - 1];
+    if (last?.key === key) last.tasks.push(t);
+    else days.push({ key, title: dayTitle(t.createdAt), tasks: [t] });
+  }
+
+  return (
+    <div className="tl">
+      <div className="tl-hd">
+        <span>
+          {sorted.length} task · terbaru di atas
+        </span>
+        <IconButton icon="plus" label="Tambah task" size="sm" className="kb-plus" onClick={props.onAdd} />
+      </div>
+      {days.length === 0 && <p className="kb-empty tl-empty">Belum ada task</p>}
+      {days.map((d) => (
+        <section key={d.key} className="tl-day" aria-label={`Dibuat ${d.title}`}>
+          <h2 className="tl-date">
+            <span className="tl-dot" aria-hidden="true" />
+            Dibuat {d.title}
+          </h2>
+          <ul className="tl-rows">
+            {d.tasks.map((t) => (
+              <li key={t.id}>
+                <button type="button" className={`tl-row ${t.status}`} onClick={() => props.onOpen(t)}>
+                  <span className={`kb-check ${t.status}`} aria-hidden="true" />
+                  <span className="tl-main">
+                    <span className="kb-title">{t.title}</span>
+                    {t.featureId !== null && props.featureName.has(t.featureId) && (
+                      <span className="kb-feature">{props.featureName.get(t.featureId)}</span>
+                    )}
+                  </span>
+                  <span className={`tl-status ${t.status}`}>{statusLabel[t.status]}</span>
+                  <span className="tl-time">
+                    <time dateTime={t.createdAt} title={`Dibuat ${noteDate(t.createdAt)}`}>
+                      {clock(t.createdAt)}
+                    </time>
+                  </span>
+                  <span className="tl-done">
+                    {t.status === 'done' && t.doneAt ? (
+                      <>
+                        Selesai <time dateTime={t.doneAt}>{noteDate(t.doneAt)}</time>
+                      </>
+                    ) : null}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/** When a task was added and, once in Selesai, when it was finished. */
+function TaskTimes({ task }: { task: BoardTask }) {
+  if (!task.createdAt) return null;
+  return (
+    <span className="kb-times">
+      <span>
+        Dibuat <time dateTime={task.createdAt}>{noteDate(task.createdAt)}</time>
+      </span>
+      {task.status === 'done' && task.doneAt && (
+        <span className="done">
+          Selesai <time dateTime={task.doneAt}>{noteDate(task.doneAt)}</time>
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -722,6 +831,7 @@ type Dialog =
   | { type: 'notes' };
 
 /** Share of a project's tasks that are done, as a whole percent; null when it has none. */
+
 function progressOf(tasks: BoardTask[]) {
   if (tasks.length === 0) return null;
   return Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100);
@@ -750,57 +860,6 @@ function Progress({ tasks, large = false }: { tasks: BoardTask[]; large?: boolea
   );
 }
 
-function ProjectList(props: { projects: BoardProject[]; tasks: BoardTask[]; onOpen: (id: number) => void; onAdd: () => void }) {
-  if (props.projects.length === 0) {
-    return (
-      <div className="pj-empty">
-        <p>Belum ada project.</p>
-        <IconButton icon="plus" label="Add project" tone="p" onClick={props.onAdd} />
-      </div>
-    );
-  }
-  return (
-    <ul className="pj-grid">
-      {props.projects.map((p) => {
-        const own = props.tasks.filter((t) => t.projectId === p.id);
-        return (
-          <li key={p.id}>
-            <a
-              className="pj-card"
-              href={`/mydashboard/project/${p.id}`}
-              onClick={(e) => {
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-                e.preventDefault();
-                props.onOpen(p.id);
-              }}
-            >
-              <span className="pj-card-hd">
-                <span className={`kb-sq ${p.kind.toLowerCase()}`} aria-hidden="true">
-                  {p.title.trim().charAt(0).toUpperCase()}
-                </span>
-                <span className="pj-name">{p.title}</span>
-                <span className="pj-go" aria-hidden="true">
-                  ↗
-                </span>
-              </span>
-              <span className={`kb-kind ${p.kind.toLowerCase()}`}>{p.kind}</span>
-              {p.description && <span className="pj-desc">{p.description}</span>}
-              <Progress tasks={own} />
-              <span className="pj-counts">
-                {boardStatuses.map((st) => (
-                  <span key={st} className={`pj-count ${st}`}>
-                    <i aria-hidden="true" />
-                    {statusLabel[st]} <b>{own.filter((t) => t.status === st).length}</b>
-                  </span>
-                ))}
-              </span>
-            </a>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
 
 export default function ProjectBoard(props: {
   adminKey: string;
@@ -819,6 +878,7 @@ export default function ProjectBoard(props: {
   const [drop, setDrop] = useState<{ status: BoardStatus; before: number | null } | null>(null);
   /** Feature the columns are narrowed to: an id, 'none' for tasks without one, or null for all. */
   const [featureFilter, setFeatureFilter] = useState<number | 'none' | null>(null);
+  const [view, setView] = useState<TaskView>(readView);
   const filterId = useId();
 
   // Each project page starts with all its tasks shown.
@@ -849,22 +909,11 @@ export default function ProjectBoard(props: {
     // onLocked is a fresh function each render; only the key and retries decide when to load.
   }, [adminKey, attempt]);
 
-  const head = (title: string, extra?: ReactNode) => (
-    <header className="dsh-head pj-head">
-      <div>
-        <span className="ix">
-          <b>/</b>project
-        </span>
-        <h1>{title}</h1>
-      </div>
-      {extra}
-    </header>
-  );
 
   if (!board) {
     return (
       <>
-        {head('Project')}
+        <HomeTitle />
         {loadError ? (
           <div className="adm-error" role="alert">
             <p>Data project tidak bisa dimuat: {loadError}</p>
@@ -990,19 +1039,23 @@ export default function ProjectBoard(props: {
   if (!project) {
     return (
       <>
-        {head(
-          'Project',
-          projects.length > 0 && (
-            <IconButton icon="plus" label="Add project" tone="p" onClick={() => setDialog({ type: 'project', project: null })} />
-          ),
-        )}
-        {props.openId !== null && (
-          <p className="adm-status error" role="status">
-            Project itu tidak ditemukan. Mungkin sudah dihapus.
-          </p>
-        )}
-        {errorBox}
-        <ProjectList projects={projects} tasks={tasks} onOpen={(id) => props.onOpen(id)} onAdd={() => setDialog({ type: 'project', project: null })} />
+        <HomeView
+          projects={projects}
+          tasks={tasks}
+          features={board.features}
+          onOpen={(id) => props.onOpen(id)}
+          onAdd={() => setDialog({ type: 'project', project: null })}
+          notice={
+            <>
+              {props.openId !== null && (
+                <p className="adm-status error" role="status">
+                  Project itu tidak ditemukan. Mungkin sudah dihapus.
+                </p>
+              )}
+              {errorBox}
+            </>
+          }
+        />
         {dialogs}
       </>
     );
@@ -1041,7 +1094,9 @@ export default function ProjectBoard(props: {
     if (JSON.stringify(orderOf(next)) === JSON.stringify(orderOf(prev))) return;
     setTasks(next);
     try {
-      await api('PUT', '/board/order', orderOf(next));
+      const res = await api<{ tasks?: BoardTask[] }>('PUT', '/board/order', orderOf(next));
+      const saved = new Map((res.tasks ?? []).map((t) => [t.id, t]));
+      if (saved.size) setBoard((b) => b && { ...b, tasks: b.tasks.map((t) => (saved.has(t.id) ? { ...t, doneAt: saved.get(t.id)!.doneAt } : t)) });
     } catch (err) {
       setTasks(prev);
       setError(msg(err));
@@ -1049,7 +1104,7 @@ export default function ProjectBoard(props: {
   };
 
   return (
-    <>
+    <div className="pj-detail">
       <a
         className="pj-back"
         aria-label="Semua project"
@@ -1139,72 +1194,105 @@ export default function ProjectBoard(props: {
             Menampilkan {shown.length} dari {own.length} task
           </p>
         )}
+        <div className="pj-view" role="group" aria-label="Tampilan task">
+          {(
+            [
+              ['board', 'columns', 'Tampilan kolom'],
+              ['list', 'rows', 'Tampilan list'],
+            ] as const
+          ).map(([v, icon, label]) => (
+            <button
+              key={v}
+              type="button"
+              className={view === v ? 'on' : undefined}
+              aria-pressed={view === v}
+              aria-label={label}
+              title={label}
+              onClick={() => {
+                setView(v);
+                saveView(v);
+              }}
+            >
+              <Glyph name={icon} />
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="kb">
-        {boardStatuses.map((status) => {
-          const list = shown.filter((t) => t.status === status);
-          const isTarget = drop?.status === status;
-          const add = () => setDialog({ type: 'task', task: null, status });
-          return (
-            <section key={status} className={isTarget ? `kb-col ${status} over` : `kb-col ${status}`} aria-label={statusLabel[status]}>
-              <header className="kb-col-hd">
-                <span className="kb-sq col" aria-label={`${list.length} task`}>
-                  {list.length}
-                </span>
-                <span className="kb-pill">{statusLabel[status]}</span>
-                <IconButton icon="plus" label={`Tambah task ke ${statusLabel[status]}`} size="sm" className="kb-plus" onClick={add} />
-              </header>
-              <div
-                className="kb-list"
-                onDragOver={onDragOver(status)}
-                onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setDrop(null)}
-                onDrop={onDrop}
-              >
-                {list.map((t) => (
-                  <div key={t.id} className="kb-slot">
-                    {isTarget && drop.before === t.id && dragId !== t.id && <div className="kb-drop" aria-hidden="true" />}
-                    {/* A div rather than a button: Firefox will not drag a button. */}
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      className={dragId === t.id ? 'kb-card dragging' : 'kb-card'}
-                      draggable
-                      data-id={t.id}
-                      onClick={() => setDialog({ type: 'task', task: t, status: t.status })}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter' && e.key !== ' ') return;
-                        e.preventDefault();
-                        setDialog({ type: 'task', task: t, status: t.status });
-                      }}
-                      onDragStart={(e) => {
-                        e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/plain', String(t.id));
-                        setDragId(t.id);
-                      }}
-                      onDragEnd={() => {
-                        setDragId(null);
-                        setDrop(null);
-                      }}
-                    >
-                      <span className={`kb-check ${status}`} aria-hidden="true" />
-                      <span className="kb-body">
-                        <span className="kb-title">{t.title}</span>
-                        {t.featureId !== null && featureName.has(t.featureId) && <span className="kb-feature">{featureName.get(t.featureId)}</span>}
-                      </span>
+      {view === 'list' ? (
+        <TaskTable
+          tasks={shown}
+          featureName={featureName}
+          onOpen={(t) => setDialog({ type: 'task', task: t, status: t.status })}
+          onAdd={() => setDialog({ type: 'task', task: null, status: 'not_started' })}
+        />
+      ) : (
+        <div className="kb">
+          {boardStatuses.map((status) => {
+            const list = shown.filter((t) => t.status === status);
+            const isTarget = drop?.status === status;
+            const add = () => setDialog({ type: 'task', task: null, status });
+            return (
+              <section key={status} className={isTarget ? `kb-col ${status} over` : `kb-col ${status}`} aria-label={statusLabel[status]}>
+                <header className="kb-col-hd">
+                  <span className={`kb-ring ${status}`} aria-hidden="true" />
+                  <span className="kb-pill">{statusLabel[status]}</span>
+                  <span className="kb-count" aria-label={`${list.length} task`}>
+                    {list.length}
+                  </span>
+                  <IconButton icon="plus" label={`Tambah task ke ${statusLabel[status]}`} size="sm" className="kb-plus" onClick={add} />
+                </header>
+                <div
+                  className="kb-list"
+                  onDragOver={onDragOver(status)}
+                  onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setDrop(null)}
+                  onDrop={onDrop}
+                >
+                  {list.map((t) => (
+                    <div key={t.id} className="kb-slot">
+                      {isTarget && drop.before === t.id && dragId !== t.id && <div className="kb-drop" aria-hidden="true" />}
+                      {/* A div rather than a button: Firefox will not drag a button. */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        className={dragId === t.id ? 'kb-card dragging' : 'kb-card'}
+                        draggable
+                        data-id={t.id}
+                        onClick={() => setDialog({ type: 'task', task: t, status: t.status })}
+                        onKeyDown={(e) => {
+                          if (e.key !== 'Enter' && e.key !== ' ') return;
+                          e.preventDefault();
+                          setDialog({ type: 'task', task: t, status: t.status });
+                        }}
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', String(t.id));
+                          setDragId(t.id);
+                        }}
+                        onDragEnd={() => {
+                          setDragId(null);
+                          setDrop(null);
+                        }}
+                      >
+                        <span className={`kb-check ${status}`} aria-hidden="true" />
+                        <span className="kb-body">
+                          <span className="kb-title">{t.title}</span>
+                          {t.featureId !== null && featureName.has(t.featureId) && <span className="kb-feature">{featureName.get(t.featureId)}</span>}
+                          <TaskTimes task={t} />
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {isTarget && drop.before === null && <div className="kb-drop" aria-hidden="true" />}
-                {list.length === 0 && <p className="kb-empty">Belum ada task</p>}
-                <IconButton icon="plus" label={`Tambah task ke ${statusLabel[status]}`} tone="ghost" size="sm" className="kb-add" onClick={add} />
-              </div>
-            </section>
-          );
-        })}
-      </div>
+                  ))}
+                  {isTarget && drop.before === null && <div className="kb-drop" aria-hidden="true" />}
+                  {list.length === 0 && <p className="kb-empty">Belum ada task</p>}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
 
       {dialogs}
-    </>
+    </div>
   );
 }

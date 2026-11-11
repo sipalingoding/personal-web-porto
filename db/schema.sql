@@ -136,3 +136,6 @@ alter table board_tasks add column if not exists feature_id integer references b
 
 -- Links on a board project, as a list of { label, url }, shown under its name.
 alter table board_projects add column if not exists links jsonb not null default '[]'::jsonb;
+
+-- When a task reached Selesai; cleared if it moves back out.
+alter table board_tasks add column if not exists done_at timestamptz;

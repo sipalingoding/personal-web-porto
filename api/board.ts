@@ -80,8 +80,31 @@ function links(v: unknown): BoardLink[] {
   });
 }
 
-type TaskRow = { id: number; project_id: number; feature_id: number | null; title: string; status: BoardStatus };
-const toTask = (t: TaskRow): BoardTask => ({ id: t.id, projectId: t.project_id, featureId: t.feature_id, title: t.title, status: t.status });
+type TaskRow = {
+  id: number;
+  project_id: number;
+  feature_id: number | null;
+  title: string;
+  status: BoardStatus;
+  created_at: Date;
+  done_at: Date | null;
+};
+const toTask = (t: TaskRow): BoardTask => ({
+  id: t.id,
+  projectId: t.project_id,
+  featureId: t.feature_id,
+  title: t.title,
+  status: t.status,
+  createdAt: t.created_at.toISOString(),
+  doneAt: t.done_at ? t.done_at.toISOString() : null,
+});
+
+/**
+ * SQL for done_at given the new status: stamped when a task reaches done, kept as it was
+ * for a task already done (older ones have none), cleared when it leaves done.
+ */
+const doneAt = (param: string) =>
+  `done_at = case when ${param}::text <> 'done' then null when status = 'done' then done_at else now() end`;
 
 type FeatureRow = { id: number; project_id: number; name: string };
 const toFeature = (f: FeatureRow): BoardFeature => ({ id: f.id, projectId: f.project_id, name: f.name });
@@ -98,7 +121,7 @@ const toNote = (n: NoteRow): BoardNote => ({
 const NOTE_COLS = 'id, project_id, body, created_at, updated_at';
 
 const PROJECT_COLS = 'id, title, kind, description, links';
-const TASK_COLS = 'id, project_id, feature_id, title, status';
+const TASK_COLS = 'id, project_id, feature_id, title, status, created_at, done_at';
 
 /** Turns "the project was deleted meanwhile" (foreign key error 23503) into a clear 404. */
 const missingProject = (err: { code?: string }) => {
@@ -201,8 +224,9 @@ export function boardRoutes(pool: pg.Pool) {
     // New tasks go to the top of their column.
     const { rows } = await pool
       .query<TaskRow>(
-        `insert into board_tasks (project_id, feature_id, title, status, position)
-         values ($1, $4, $2, $3, coalesce((select min(position) - 1 from board_tasks where status = $3), 0))
+        `insert into board_tasks (project_id, feature_id, title, status, position, done_at)
+         values ($1, $4, $2, $3, coalesce((select min(position) - 1 from board_tasks where status = $3), 0),
+                 case when $3::text = 'done' then now() end)
          returning ${TASK_COLS}`,
         [projectId, title, st, featureId],
       )
@@ -235,6 +259,7 @@ export function boardRoutes(pool: pg.Pool) {
       add('status', status(o.status));
       // Moving through this route puts the task at the top of its new column.
       const s = vals.length;
+      sets.push(doneAt(`$${s}`));
       vals.push(tid);
       sets.push(`position = coalesce((select min(position) - 1 from board_tasks where status = $${s} and id <> $${vals.length}), 0)`);
     }
@@ -329,15 +354,18 @@ export function boardRoutes(pool: pg.Pool) {
       });
     }
     const client = await pool.connect();
+    const moved: BoardTask[] = [];
     try {
       await client.query('begin');
       for (const st of boardStatuses) {
         if (order[st].length === 0) continue;
-        await client.query(
-          `update board_tasks b set status = $1, position = o.pos
-           from unnest($2::int[]) with ordinality as o(id, pos) where b.id = o.id`,
+        const { rows } = await client.query<TaskRow>(
+          `update board_tasks b set status = $1, position = o.pos, ${doneAt('$1')}
+           from unnest($2::int[]) with ordinality as o(id, pos) where b.id = o.id
+           returning ${TASK_COLS.split(', ').map((c) => `b.${c}`).join(', ')}`,
           [st, order[st]],
         );
+        moved.push(...rows.map(toTask));
       }
       await client.query('commit');
     } catch (err) {
@@ -346,7 +374,8 @@ export function boardRoutes(pool: pg.Pool) {
     } finally {
       client.release();
     }
-    return c.json({ ok: true });
+    // The times come back so the page can show when a dragged task was finished.
+    return c.json({ ok: true, tasks: moved });
   });
 
   return r;
