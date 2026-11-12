@@ -16,7 +16,7 @@ import {
   type BoardTask,
 } from '../data/board';
 import { Glyph, IconButton } from './icons';
-import { HomeTitle, HomeView } from './Home';
+import { RoomPage, WorkRoomPage } from './Rooms';
 
 type Api = <T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown) => Promise<T>;
 
@@ -864,9 +864,11 @@ function Progress({ tasks, large = false }: { tasks: BoardTask[]; large?: boolea
 export default function ProjectBoard(props: {
   adminKey: string;
   onLocked: () => void;
-  /** Project whose page is open, from the address; null shows the list. */
+  /** Project whose page is open, from the address; null shows the work room (the list). */
   openId: number | null;
-  onOpen: (id: number | null) => void;
+  onOpen: (id: number) => void;
+  /** Leaves for the work room's page (from a project), or for the house (null). */
+  onRoom: (room: 'work' | null) => void;
 }) {
   const { adminKey, onLocked } = props;
   const [board, setBoard] = useState<Board | null>(null);
@@ -911,9 +913,8 @@ export default function ProjectBoard(props: {
 
 
   if (!board) {
-    return (
+    const status = (
       <>
-        <HomeTitle />
         {loadError ? (
           <div className="adm-error" role="alert">
             <p>Data project tidak bisa dimuat: {loadError}</p>
@@ -925,6 +926,13 @@ export default function ProjectBoard(props: {
           </p>
         )}
       </>
+    );
+    return props.openId === null ? (
+      <RoomPage room="work" onHome={() => props.onRoom(null)}>
+        {status}
+      </RoomPage>
+    ) : (
+      status
     );
   }
 
@@ -987,7 +995,7 @@ export default function ProjectBoard(props: {
                 },
             );
             setDialog(null);
-            props.onOpen(null);
+            props.onRoom('work');
           }}
           onClose={() => setDialog(null)}
         />
@@ -1039,12 +1047,12 @@ export default function ProjectBoard(props: {
   if (!project) {
     return (
       <>
-        <HomeView
+        <WorkRoomPage
           projects={projects}
           tasks={tasks}
-          features={board.features}
           onOpen={(id) => props.onOpen(id)}
           onAdd={() => setDialog({ type: 'project', project: null })}
+          onHome={() => props.onRoom(null)}
           notice={
             <>
               {props.openId !== null && (
@@ -1107,16 +1115,16 @@ export default function ProjectBoard(props: {
     <div className="pj-detail">
       <a
         className="pj-back"
-        aria-label="Semua project"
-        title="Semua project"
-        href="/mydashboard/project"
+        aria-label="Ruang Kerja"
+        title="Ruang Kerja"
+        href="/mydashboard/kerja"
         onClick={(e) => {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
           e.preventDefault();
-          props.onOpen(null);
+          props.onRoom('work');
         }}
       >
-        <Glyph name="back" />
+        <Glyph name="door" />
       </a>
 
       <section className="pj-hero" aria-label="Detail project">

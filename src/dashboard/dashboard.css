@@ -114,42 +114,9 @@
 .dsh-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   padding: 0.5rem 0 1.25rem;
-}
-
-.dsh-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--d-ink);
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-}
-
-.dsh-brand-mk {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #5b8def, #2f6bff);
-  box-shadow: 0 6px 16px -6px rgb(47 107 255 / 0.6);
-}
-
-.dsh-brand-mk svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  fill: #fff;
-}
-
-.dsh-brand:focus-visible {
-  outline: 2px solid var(--d-blue);
-  outline-offset: 4px;
-  border-radius: 0.75rem;
 }
 
 .dsh-top-end {
@@ -1291,10 +1258,6 @@
     display: none;
   }
 
-  .dsh-brand {
-    font-size: 1.25rem;
-  }
-
   .dsh-head h1 {
     font-size: 2rem;
   }
@@ -1902,8 +1865,8 @@
 
 
 /* ------------------------------------------------------------------ front page
-   Pale blue page, white cards with large radii and soft blue-grey shadows, one blue
-   accent, the isometric office on the left and the overview on the right. */
+   Pale blue page with the isometric house filling it; an object in each room opens that
+   room's page. */
 .dsh {
   --d-bg: #eef3fb;
   --d-bg-1: #f5f8fe;
@@ -1945,564 +1908,7 @@
   --hm-track: #243049;
 }
 
-.hm {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
-  grid-template-areas:
-    'main side'
-    'bottom bottom';
-  gap: 1.5rem;
-}
-
-.hm-main {
-  grid-area: main;
-  display: grid;
-  align-content: start;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.hm-side {
-  grid-area: side;
-  display: grid;
-  align-content: start;
-  gap: 1.5rem;
-  min-width: 0;
-}
-
-.hm-bottom {
-  grid-area: bottom;
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.1fr) minmax(0, 0.85fr);
-  gap: 1.5rem;
-  min-width: 0;
-}
-
-/* Title: two-tone, large and bold. */
-.hm-title h1 {
-  font-size: clamp(2.25rem, 4.2vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.035em;
-  color: var(--d-ink);
-}
-
-.hm-title h1 span {
-  background: linear-gradient(90deg, var(--hm-blue), var(--hm-blue-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hm-title p {
-  margin-top: 0.625rem;
-  font-size: 1.125rem;
-  color: var(--d-body);
-}
-
-/* Office map */
-.hm-map {
-  position: relative;
-  min-width: 0;
-}
-
-.hm-tools {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 3;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.hm-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  height: 2.75rem;
-  padding: 0 1.125rem;
-  border: 1px solid var(--d-edge);
-  border-radius: 999px;
-  background: var(--d-card);
-  box-shadow: var(--d-shadow);
-  color: var(--d-ink);
-  font: inherit;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-
-.hm-pill .glyph {
-  width: 1rem;
-  height: 1rem;
-}
-
-.hm-pill:hover {
-  box-shadow: var(--d-shadow-lift);
-  transform: translateY(-1px);
-}
-
-.hm-pill:focus-visible {
-  outline: 2px solid var(--hm-blue);
-  outline-offset: 2px;
-}
-
-.hm-pill.p {
-  border-color: transparent;
-  background: var(--hm-blue);
-  color: #fff;
-}
-
-.hm-scene {
-  position: relative;
-  width: 100%;
-  margin-top: 3.5rem;
-}
-
-.hm-scene .iso {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  filter: drop-shadow(0 24px 30px rgb(30 58 120 / 0.14));
-}
-
-/* Label over a cubicle: a white card pointing down at it. */
-.hm-pin {
-  position: absolute;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  max-width: 13rem;
-  padding: 0.5rem 0.875rem 0.5rem 0.5rem;
-  border: 1px solid var(--d-edge);
-  border-radius: 1rem;
-  background: var(--d-card);
-  box-shadow: var(--d-shadow);
-  color: var(--d-ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  translate: -50% -100%;
-  transition: box-shadow 0.2s, translate 0.2s;
-}
-
-.hm-pin:hover {
-  box-shadow: var(--d-shadow-lift);
-  translate: -50% calc(-100% - 2px);
-}
-
-.hm-pin:focus-visible {
-  outline: 2px solid var(--hm-blue);
-  outline-offset: 2px;
-}
-
-.hm-pin-tx {
-  display: grid;
-  min-width: 0;
-  line-height: 1.3;
-}
-
-.hm-pin-tx b {
-  overflow: hidden;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.hm-pin-tx span {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--d-body);
-  font-variant-numeric: tabular-nums;
-}
-
-.hm-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--s-not_started);
-}
-
-.hm-dot.in_progress {
-  background: var(--s-in_progress);
-}
-
-.hm-dot.done {
-  background: var(--s-done);
-}
-
-.hm-init {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.75rem;
-  background: var(--hm-tint);
-  color: var(--hm-blue);
-  font-size: 0.9375rem;
-  font-weight: 700;
-}
-
-.hm-init.freelance {
-  background: color-mix(in srgb, #f08a3c 16%, var(--d-card));
-  color: #c25e12;
-}
-
-:root:not(.light) .hm-init.freelance {
-  color: #ffad6b;
-}
-
-/* Cards */
-.hm-card {
-  display: grid;
-  align-content: start;
-  gap: 1.125rem;
-  min-width: 0;
-  padding: 1.5rem;
-  border: 1px solid var(--d-edge);
-  border-radius: var(--hm-r);
-  background: var(--d-card);
-  box-shadow: var(--d-shadow);
-}
-
-.hm-card-hd {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.hm-card-hd h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  font-size: 1.375rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--d-ink);
-}
-
-.hm-hd-ic svg,
-.hm-tile-ic {
-  display: block;
-  width: 1.375rem;
-  height: 1.375rem;
-  fill: none;
-  stroke: var(--hm-blue);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.hm-chip {
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--d-edge);
-  border-radius: 999px;
-  background: var(--d-bg-1);
-  font-size: 0.8125rem;
-  color: var(--d-body);
-}
-
-.hm-empty {
-  display: grid;
-  justify-items: start;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  font-size: 0.9375rem;
-  color: var(--d-muted);
-}
-
-/* Overview: blue wash, gauge, three tiles. */
-.hm-over {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--hm-blue) 22%, var(--d-card)) 0%, color-mix(in srgb, var(--hm-blue) 6%, var(--d-card)) 55%, var(--d-card) 100%);
-}
-
-.hm-over .hm-card-hd h2 {
-  color: var(--hm-blue);
-}
-
-.hm-gauge {
-  position: relative;
-  width: min(100%, 18rem);
-  margin: 0 auto;
-}
-
-.hm-gauge svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.hm-gauge line {
-  stroke: color-mix(in srgb, var(--hm-blue) 18%, var(--d-card));
-  stroke-width: 3.2;
-  stroke-linecap: round;
-}
-
-.hm-gauge-v {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  display: grid;
-  justify-items: center;
-  translate: -50% -50%;
-  font-size: 3.5rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  color: var(--d-ink);
-  white-space: nowrap;
-}
-
-.hm-gauge-v b {
-  position: relative;
-  font-weight: inherit;
-}
-
-.hm-gauge-v small {
-  position: absolute;
-  top: 0.375rem;
-  left: 100%;
-  margin-left: 0.125rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.hm-gauge-v span {
-  margin-top: 0.5rem;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--d-body);
-}
-
-.hm-tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.625rem;
-  margin: 0;
-}
-
-.hm-tiles > div {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 0;
-  padding: 0.875rem;
-  border: 1px solid var(--d-edge);
-  border-radius: 1rem;
-  background: var(--d-card);
-  box-shadow: 0 6px 16px -10px rgb(30 58 120 / 0.2);
-}
-
-.hm-tile-ic {
-  margin-bottom: 0.375rem;
-}
-
-.hm-tiles dt {
-  font-size: 0.8125rem;
-  color: var(--d-body);
-}
-
-.hm-tiles dd {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--d-ink);
-}
-
-.hm-tiles span {
-  font-size: 0.75rem;
-  color: var(--d-muted);
-}
-
-/* Tasks by status: tinted tiles. */
-.hm-status {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.625rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.hm-status li {
-  display: grid;
-  gap: 0.25rem;
-  padding: 1rem;
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--s-not_started) 12%, var(--d-card));
-}
-
-.hm-status li.in_progress {
-  background: color-mix(in srgb, var(--s-in_progress) 14%, var(--d-card));
-}
-
-.hm-status li.done {
-  background: color-mix(in srgb, var(--s-done) 12%, var(--d-card));
-}
-
-.hm-status span {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--d-ink);
-}
-
-.hm-status b {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--d-ink);
-}
-
-.hm-status small {
-  font-size: 0.8125rem;
-  color: var(--d-body);
-}
-
-/* Rows in the project and task lists */
-.hm-rows {
-  display: grid;
-  gap: 0.25rem;
-  margin: 0 -0.5rem;
-  padding: 0;
-  list-style: none;
-}
-
-.hm-prow,
-.hm-trow {
-  display: grid;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.625rem 0.5rem;
-  border-radius: 0.875rem;
-  color: var(--d-ink);
-  text-decoration: none;
-  transition: background 0.15s;
-}
-
-.hm-prow {
-  grid-template-columns: auto minmax(0, 1.2fr) minmax(4rem, 1fr) 3.5rem 2.75rem;
-}
-
-.hm-trow {
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-}
-
-.hm-prow:hover,
-.hm-trow:hover {
-  background: var(--d-bg-1);
-}
-
-.hm-prow:focus-visible,
-.hm-trow:focus-visible {
-  outline: 2px solid var(--hm-blue);
-  outline-offset: -2px;
-}
-
-.hm-prow-name {
-  display: grid;
-  min-width: 0;
-  line-height: 1.35;
-}
-
-.hm-prow-name b {
-  overflow: hidden;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.hm-prow-name span {
-  overflow: hidden;
-  font-size: 0.8125rem;
-  color: var(--d-muted);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.hm-bar {
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--hm-track);
-  overflow: hidden;
-}
-
-.hm-bar i {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--hm-blue), var(--hm-teal));
-}
-
-.hm-bar.done i {
-  background: var(--s-done);
-}
-
-.hm-num {
-  font-size: 0.875rem;
-  color: var(--d-body);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.hm-pct {
-  color: var(--d-muted);
-}
-
-.hm-time {
-  font-size: 0.8125rem;
-  color: var(--d-muted);
-  white-space: nowrap;
-}
-
-.hm-tag {
-  padding: 0.25rem 0.625rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--s-not_started) 14%, var(--d-card));
-  color: var(--d-body);
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.hm-tag.in_progress {
-  background: color-mix(in srgb, var(--s-in_progress) 18%, var(--d-card));
-  color: color-mix(in srgb, var(--s-in_progress) 50%, var(--d-ink));
-}
-
-.hm-tag.done {
-  background: color-mix(in srgb, var(--s-done) 14%, var(--d-card));
-  color: color-mix(in srgb, var(--s-done) 60%, var(--d-ink));
-}
-
-/* Status colours, shared by the front page and its dots. */
-.dsh {
-  --s-not_started: #8592a6;
-  --s-in_progress: #e59a1a;
-  --s-done: #1f9d55;
-}
-
-:root:not(.light) .dsh {
-  --s-not_started: #7d889c;
-  --s-in_progress: #e3a43a;
-  --s-done: #34b46c;
-}
-
-/* ------------------------------------------------------------------ isometric office materials
+/* ------------------------------------------------------------------ isometric house materials
    One base colour per material. Faces darken it a little toward a cool blue-grey, and
    every shape is stroked in its own colour with round joins, which softens the corners
    and hides the seams between faces. */
@@ -2635,579 +2041,6 @@
   filter: drop-shadow(0 24px 30px rgb(0 0 0 / 0.35));
 }
 
-/* ------------------------------------------------------------------ front page, narrower screens */
-@media (max-width: 1180px) {
-  .hm {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'main'
-      'side'
-      'bottom';
-  }
-
-  .hm-side {
-    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .hm-bottom {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 760px) {
-  .hm {
-    gap: 1rem;
-  }
-
-  .hm-side,
-  .hm-bottom {
-    gap: 1rem;
-  }
-
-  .hm-card {
-    padding: 1.125rem;
-    border-radius: 1.25rem;
-  }
-
-  .hm-card-hd h2 {
-    font-size: 1.125rem;
-  }
-
-  .hm-tools {
-    position: static;
-    justify-content: flex-start;
-  }
-
-  /* Labels shrink to a small tag on phones. */
-  .hm-pin {
-    gap: 0.375rem;
-    max-width: 8.5rem;
-    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-    border-radius: 0.625rem;
-  }
-
-  .hm-pin .hm-init {
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-  }
-
-  .hm-pin-tx b {
-    font-size: 0.75rem;
-  }
-
-  .hm-pin-tx span {
-    font-size: 0.6875rem;
-  }
-
-  .hm-tiles {
-    gap: 0.5rem;
-  }
-
-  .hm-tiles > div {
-    padding: 0.625rem;
-  }
-
-  .hm-tiles dd {
-    font-size: 1.375rem;
-  }
-
-  .hm-prow {
-    grid-template-columns: auto minmax(0, 1fr) 3.25rem;
-  }
-
-  .hm-prow .hm-bar {
-    grid-column: 2 / -1;
-    grid-row: 2;
-  }
-
-  .hm-prow .hm-num:not(.hm-pct) {
-    display: none;
-  }
-
-  .hm-trow {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-
-  .hm-trow .hm-time {
-    display: none;
-  }
-}
-
-/* On small phones the labels keep only the project's initial; the full list is below. */
-@media (max-width: 560px) {
-  .hm-scene {
-    margin-top: 2.25rem;
-  }
-
-  .hm-pin {
-    padding: 0.1875rem;
-  }
-
-  .hm-pin-tx {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hm-pill,
-  .hm-pin {
-    transition: none;
-  }
-}
-
-/* ------------------------------------------------------------------ front page on one screen
-   On a desktop-sized window the front page fills the viewport exactly: the office
-   scales to the space left beside the overview, and long lists scroll inside their
-   cards instead of the page. Smaller windows keep the stacked, scrolling layout. */
-.hm-map {
-  container-type: size;
-}
-
-@media (min-width: 1100px) and (min-height: 680px) {
-  .dsh-frame:has(.hm) {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-    padding-top: 0.75rem;
-    padding-bottom: 1.25rem;
-    overflow: hidden;
-  }
-
-  .dsh-frame:has(.hm) .dsh-top {
-    padding: 0.25rem 0 0.75rem;
-  }
-
-  .dsh-frame:has(.hm) .dsh-main {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .hm {
-    height: 100%;
-    grid-template-columns: minmax(0, 1fr) clamp(19rem, 24vw, 23rem);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 36%);
-    grid-template-areas:
-      'main side'
-      'bottom bottom';
-    gap: 1rem 1.25rem;
-  }
-
-  .hm-main {
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 0.25rem;
-    min-height: 0;
-  }
-
-  .hm-title h1 {
-    font-size: clamp(2rem, 3vw, 2.75rem);
-  }
-
-  .hm-title p {
-    margin-top: 0.375rem;
-    font-size: 1rem;
-  }
-
-  .hm-map {
-    min-height: 0;
-  }
-
-  .hm-tools {
-    top: -3.5rem;
-  }
-
-  .hm-pill {
-    height: 2.5rem;
-    font-size: 0.875rem;
-  }
-
-  /* As large as fits both ways, centred in the space. */
-  .hm-scene {
-    width: min(100cqw, 100cqh * var(--ar));
-    margin: 0 auto;
-  }
-
-  /* Labels become one slim line (name, done/total, status dot) so they stay apart on the smaller office. */
-  .hm-pin {
-    gap: 0.375rem;
-    max-width: 12rem;
-    padding: 0.3125rem 0.625rem 0.3125rem 0.3125rem;
-    border-radius: 999px;
-  }
-
-  .hm-pin .hm-init {
-    width: 1.375rem;
-    height: 1.375rem;
-    border-radius: 999px;
-    font-size: 0.6875rem;
-  }
-
-  .hm-pin-tx {
-    display: flex;
-    align-items: center;
-    gap: 0.4375rem;
-  }
-
-  .hm-pin-tx b {
-    font-size: 0.75rem;
-  }
-
-  .hm-pin-tx span {
-    flex: none;
-    gap: 0.3125rem;
-    font-size: 0.6875rem;
-    color: var(--d-muted);
-    white-space: nowrap;
-  }
-
-  .hm-side {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    min-height: 0;
-  }
-
-  .hm-over {
-    height: 100%;
-    align-content: space-between;
-    gap: 0.75rem;
-    padding: 1.25rem;
-    overflow: hidden;
-  }
-
-  .hm-gauge {
-    width: min(100%, 14.5rem);
-  }
-
-  .hm-gauge-v {
-    top: 54%;
-    font-size: 2.75rem;
-  }
-
-  .hm-tiles dt {
-    font-size: 0.75rem;
-  }
-
-  .hm-gauge-v small {
-    top: 0.25rem;
-    font-size: 1rem;
-  }
-
-  .hm-gauge-v span {
-    font-size: 0.8125rem;
-  }
-
-  .hm-tiles > div {
-    padding: 0.625rem 0.75rem;
-  }
-
-  .hm-tiles dd {
-    font-size: 1.375rem;
-  }
-
-  .hm-tile-ic {
-    width: 1.125rem;
-    height: 1.125rem;
-    margin-bottom: 0.125rem;
-  }
-
-  /* Bottom row: cards fill the row; their lists scroll inside. */
-  .hm-bottom {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.1fr) minmax(0, 0.85fr);
-    gap: 1.25rem;
-    min-height: 0;
-  }
-
-  .hm-bottom .hm-card {
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 0.75rem;
-    min-height: 0;
-    padding: 1.125rem 1.25rem;
-    overflow: hidden;
-  }
-
-  .hm-card-hd h2 {
-    font-size: 1.125rem;
-  }
-
-  .hm-hd-ic svg {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-
-  .hm-bottom .hm-rows {
-    align-content: start;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-  }
-
-  .hm-prow,
-  .hm-trow {
-    padding: 0.4375rem 0.5rem;
-  }
-
-  .hm-init {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.625rem;
-    font-size: 0.8125rem;
-  }
-
-  /* Status as three rows: name on the left, count and share on the right. */
-  .hm-status {
-    grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: minmax(0, 1fr);
-    gap: 0.5rem;
-    min-height: 0;
-  }
-
-  .hm-status li {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    align-items: center;
-    column-gap: 0.75rem;
-    padding: 0 1rem;
-    border-radius: 0.875rem;
-  }
-
-  .hm-status b {
-    order: 2;
-    font-size: 1.5rem;
-  }
-
-  .hm-status small {
-    order: 3;
-    min-width: 3.5rem;
-    text-align: right;
-  }
-}
-
-/* Short desktop windows: a slimmer title and bottom row leave the office more room. */
-@media (min-width: 1100px) and (min-height: 680px) and (max-height: 820px) {
-  .hm {
-    grid-template-rows: minmax(0, 1fr) minmax(0, 33%);
-  }
-
-  .hm-title h1 {
-    font-size: 2rem;
-  }
-
-  .hm-title p {
-    font-size: 0.875rem;
-  }
-
-  .hm-tools {
-    top: -3rem;
-  }
-
-  .hm-tiles span {
-    display: none;
-  }
-}
-
-/* ------------------------------------------------------------------ people doing the rounds
-   Each stops at a desk (facing into the cubicle), walks to the next desk, stops again,
-   then walks back. Steps alternate while walking, with a slight bob. */
-.iso-rounds {
-  animation: iso-route 18s ease-in-out infinite;
-}
-
-.iso-rounds.n1 {
-  animation-duration: 22s;
-  animation-delay: -9s;
-}
-
-.iso-walk,
-.iso-look {
-  animation: iso-walking 18s step-end infinite;
-}
-
-.iso-look {
-  animation-name: iso-looking;
-}
-
-.iso-rounds.n1 .iso-walk,
-.iso-rounds.n1 .iso-look {
-  animation-duration: 22s;
-  animation-delay: -9s;
-}
-
-.iso-step {
-  animation: iso-step 0.7s step-end infinite;
-}
-
-.iso-step.b {
-  animation-delay: -0.35s;
-}
-
-@keyframes iso-route {
-  0%,
-  20% {
-    transform: translate(0, 0);
-  }
-  44%,
-  62% {
-    transform: translate(var(--dx), var(--dy));
-  }
-  86%,
-  100% {
-    transform: translate(0, 0);
-  }
-}
-
-@keyframes iso-looking {
-  0% {
-    opacity: 1;
-  }
-  20% {
-    opacity: 0;
-  }
-  44% {
-    opacity: 1;
-  }
-  62% {
-    opacity: 0;
-  }
-  86% {
-    opacity: 1;
-  }
-}
-
-@keyframes iso-walking {
-  0% {
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  44% {
-    opacity: 0;
-  }
-  62% {
-    opacity: 1;
-  }
-  86% {
-    opacity: 0;
-  }
-}
-
-@keyframes iso-step {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-
-.iso-bob {
-  animation: iso-bob 0.35s ease-in-out infinite alternate;
-}
-
-@keyframes iso-bob {
-  to {
-    transform: translate(0, -1.2px);
-  }
-}
-
-/* Without motion they simply stand at their first desk. */
-@media (prefers-reduced-motion: reduce) {
-  .iso-rounds,
-  .iso-walk,
-  .iso-look,
-  .iso-step,
-  .iso-bob {
-    animation: none;
-  }
-
-  .iso-walk {
-    opacity: 0;
-  }
-}
-
-/* ------------------------------------------------------------------ bottom cards: compact type
-   The three cards under the office use a smaller, even scale: 16px titles, 13px names,
-   12px secondary text and numbers, 11px tags. */
-.hm-bottom .hm-card-hd h2 {
-  gap: 0.5rem;
-  font-size: 1rem;
-  letter-spacing: -0.01em;
-}
-
-.hm-bottom .hm-hd-ic svg {
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
-.hm-bottom .hm-chip {
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
-}
-
-.hm-bottom .hm-prow,
-.hm-bottom .hm-trow {
-  gap: 0.75rem;
-}
-
-.hm-bottom .hm-init {
-  width: 1.875rem;
-  height: 1.875rem;
-  border-radius: 0.5625rem;
-  font-size: 0.75rem;
-}
-
-.hm-bottom .hm-prow-name b {
-  font-size: 0.8125rem;
-}
-
-.hm-bottom .hm-prow-name span {
-  font-size: 0.75rem;
-}
-
-.hm-bottom .hm-bar {
-  height: 0.375rem;
-}
-
-.hm-bottom .hm-num,
-.hm-bottom .hm-time {
-  font-size: 0.75rem;
-}
-
-.hm-bottom .hm-tag {
-  padding: 0.1875rem 0.5rem;
-  font-size: 0.6875rem;
-}
-
-.hm-bottom .hm-empty {
-  font-size: 0.8125rem;
-}
-
-.hm-bottom .hm-status span {
-  font-size: 0.8125rem;
-}
-
-.hm-bottom .hm-status b {
-  font-size: 1.25rem;
-}
-
-.hm-bottom .hm-status small {
-  font-size: 0.75rem;
-}
-
-@media (min-width: 1100px) and (min-height: 680px) {
-  .hm-bottom .hm-status li {
-    padding: 0 0.875rem;
-  }
-
-  .hm-bottom .hm-status small {
-    min-width: 3rem;
-  }
-}
-
 /* ------------------------------------------------------------------ year-end countdown screen */
 .iso .m-signframe { --b: #ffffff; }
 .iso .m-signscreen { fill: var(--iso-screen); stroke: #24366a; }
@@ -3250,3 +2083,863 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ------------------------------------------------------------------ house materials */
+.iso .m-wood { --b: #f6efe6; }
+.iso .m-wood2 { --b: #f3ede4; }
+.iso .m-tile { --b: #eef1f7; }
+.iso .m-plank { --b: #e8ded0; }
+.iso .m-grout { --b: #dfe4ee; }
+.iso .m-rug3 { --b: #ece4fb; }
+.iso .m-wallend { --b: #e9edf5; }
+.iso .m-skirting { --b: #e3e8f1; }
+.iso .m-winframe { --b: #ffffff; }
+.iso .m-window { --b: #cfe3ff; }
+.iso .m-sill { --b: #f1f4f9; }
+.iso .m-boardframe { --b: #d9c4a0; }
+.iso .m-whiteboard { --b: #ffffff; }
+.iso .m-note3 { --b: #ffc2bd; }
+.iso .m-shelf { --b: #e3c9a2; }
+.iso .m-shelfin { --b: #b99366; }
+.iso .m-bk1 { --b: #7da2ff; }
+.iso .m-bk2 { --b: #f4c27a; }
+.iso .m-bk3 { --b: #f3a6a0; }
+.iso .m-bk4 { --b: #84cf9d; }
+.iso .m-bk5 { --b: #c8b6ff; }
+.iso .m-sofa { --b: #a9c4ff; }
+.iso .m-sofa2 { --b: #93b3f5; }
+.iso .m-cushion { --b: #c3d6ff; }
+.iso .m-shade { --b: #ffe7b8; }
+.iso .m-shadetop { --b: #fff3d6; }
+.iso .m-guitar { --b: #e5a35a; }
+.iso .m-guitar2 { --b: #7a4b2c; }
+.iso .m-neck { --b: #8a5a3c; }
+.iso .m-hole { --b: #3a2c2a; }
+.iso .m-amp { --b: #3e4658; }
+.iso .m-grille { --b: #59627a; }
+.iso .m-ampface { --b: #d9b26f; }
+.iso .m-knob { --b: #f1f4f9; }
+.iso .m-record { --b: #2a2f3d; }
+.iso .m-label { --b: #ff9a7a; }
+.iso .m-poster { --b: #ffd9c2; }
+.iso .m-posterart { --b: #8a5cf0; }
+.iso .m-posterart2 { --b: #ffffff; }
+.iso .m-console { --b: #e8d6b8; }
+.iso .m-consoleline { --b: #cdb48c; }
+.iso .m-tv { --b: #2a2f3d; }
+.iso .m-tvscreen { fill: var(--iso-screen); stroke: #1b2a52; }
+.iso .m-play { --b: #ffffff; }
+.iso .m-playbar { --b: #5f7fd0; }
+.iso .m-bowl { --b: #ff8a7a; }
+.iso .m-popcorn { --b: #fff3c4; }
+.iso .m-cork { --b: #dcb98a; }
+.iso .m-card1 { --b: #2f6bff; }
+.iso .m-card2 { --b: #e75b9b; }
+.iso .m-card3 { --b: #ff5a4f; }
+.iso .m-card4 { --b: #2a2f3d; }
+.iso .m-pin { --b: #ff5a4f; }
+.iso .m-handle { --b: #aab4c8; }
+.iso .m-folder { --b: #7da2ff; }
+.iso .m-folder2 { --b: #f4c27a; }
+.iso .m-carton { --b: #e3c39a; }
+.iso .m-carton2 { --b: #ecd0ab; }
+.iso .m-cartonline { --b: #c9a678; }
+
+.iso .m-window {
+  fill-opacity: 0.7;
+}
+
+.iso .m-string {
+  fill: none;
+  stroke: #ff5a4f;
+  stroke-width: 0.9;
+  stroke-dasharray: 2.5 1.5;
+}
+
+:root:not(.light) .iso .m-wood { --b: #2a3450; }
+:root:not(.light) .iso .m-wood2 { --b: #283149; }
+:root:not(.light) .iso .m-tile { --b: #252f49; }
+:root:not(.light) .iso .m-plank { --b: #222b43; }
+:root:not(.light) .iso .m-rug3 { --b: #33335c; }
+:root:not(.light) .iso .m-wallend { --b: #2c3752; }
+:root:not(.light) .iso .m-skirting { --b: #2c3752; }
+:root:not(.light) .iso .m-winframe { --b: #4a5878; }
+:root:not(.light) .iso .m-window { --b: #3d5c9c; }
+:root:not(.light) .iso .m-sill { --b: #4a5878; }
+:root:not(.light) .iso .m-whiteboard { --b: #e6e9f1; }
+:root:not(.light) .iso .m-shelf { --b: #8c6d4c; }
+:root:not(.light) .iso .m-shelfin { --b: #4e3b2a; }
+:root:not(.light) .iso .m-sofa { --b: #5f7fd0; }
+:root:not(.light) .iso .m-sofa2 { --b: #536fb8; }
+:root:not(.light) .iso .m-cushion { --b: #7393e0; }
+:root:not(.light) .iso .m-console { --b: #8c6d4c; }
+:root:not(.light) .iso .m-consoleline { --b: #6e5439; }
+:root:not(.light) .iso .m-poster { --b: #c99a80; }
+:root:not(.light) .iso .m-cork { --b: #a8865c; }
+:root:not(.light) .iso .m-carton { --b: #a8865c; }
+:root:not(.light) .iso .m-carton2 { --b: #b8966b; }
+:root:not(.light) .iso .m-grout { --b: #2b3652; }
+
+/* Running shoe room */
+.iso .m-sole { --b: #ffffff; }
+.iso .m-run1 { --b: #ff8a3d; }
+.iso .m-run2 { --b: #b6e05a; }
+.iso .m-run3 { --b: #5b8cff; }
+.iso .m-run4 { --b: #ff6fa5; }
+.iso .m-shorts { --b: #2a2f3d; }
+.iso .m-mat { --b: #dfe4ee; }
+.iso .m-tread { --b: #3e4658; }
+.iso .m-belt { --b: #2a2f3d; }
+.iso .m-display { --b: #7fd1c0; }
+.iso .m-bag { --b: #ff8a3d; }
+.iso .m-bagband { --b: #2a2f3d; }
+.iso .m-bottle { --b: #8fd3ff; }
+.iso .m-bottlecap { --b: #2f6bff; }
+:root:not(.light) .iso .m-mat { --b: #303a57; }
+:root:not(.light) .iso .m-sole { --b: #e6e9f1; }
+
+/* ------------------------------------------------------------------ front page: the house */
+.hm {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.hm-map {
+  min-width: 0;
+}
+
+.hm-scene {
+  position: relative;
+  width: 100%;
+  max-width: 72rem;
+  margin: 1rem auto 2rem;
+}
+
+.hm-scene .iso {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  filter: drop-shadow(0 24px 30px rgb(30 58 120 / 0.14));
+}
+
+.hm-init {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.625rem;
+  background: var(--hm-tint);
+  color: var(--hm-blue);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.hm-init .glyph {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+}
+
+.hm-init.freelance {
+  background: color-mix(in srgb, #f08a3c 16%, var(--d-card));
+  color: #c25e12;
+}
+
+:root:not(.light) .hm-init.freelance {
+  color: #ffad6b;
+}
+
+@media (max-width: 760px) {
+  .hm-scene {
+    margin: 0.5rem auto 1.5rem;
+  }
+
+}
+
+
+/* On a desktop-sized window the page fills the viewport: the house is as large as fits. */
+@media (min-width: 1100px) and (min-height: 680px) {
+  .dsh-frame:has(.hm) {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding-top: 0.75rem;
+    padding-bottom: 1.25rem;
+    overflow: hidden;
+  }
+
+  .dsh-frame:has(.hm) .dsh-top {
+    padding: 0.25rem 0 0.75rem;
+  }
+
+  .dsh-frame:has(.hm) .dsh-main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .hm {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .hm-map {
+    flex: 1;
+    min-height: 0;
+    padding: 0.5rem 0 1rem;
+    container-type: size;
+  }
+
+  .hm-scene {
+    width: min(100cqw, 100cqh * var(--ar));
+    max-width: none;
+    margin: 0 auto;
+  }
+}
+
+/* ------------------------------------------------------------------ the character
+   Only the pose in the current room shows. Moving rooms, the character walks through the
+   doorways (the path is animated from script), stepping and bobbing, and the new pose
+   fades in on arrival. */
+.iso-actor {
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.iso-actor.on {
+  opacity: 1;
+}
+
+.iso-step {
+  animation: iso-step 0.5s step-end infinite;
+}
+
+.iso-step.b {
+  animation-delay: -0.25s;
+}
+
+@keyframes iso-step {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.iso-bob {
+  animation: iso-bob 0.25s ease-in-out infinite alternate;
+}
+
+@keyframes iso-bob {
+  to {
+    transform: translate(0, -1.5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iso-actor {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ front door and theme lamp
+   The lamp is lit in the light theme and off in the dark one; clicking it switches. The
+   front door's key locks the dashboard. Both have a round hit area over the drawing. */
+.iso .m-door { --b: #7da2ff; }
+.iso .m-doorpanel { --b: #93b3f5; }
+.iso .m-doorframe { --b: #ffffff; }
+.iso .m-knob2 { --b: #d9b26f; }
+.iso .m-lock { --b: #2a2f3d; }
+.iso .m-key { --b: #f4c27a; }
+.iso .m-doormat { --b: #c9a678; }
+.iso .m-doormatline { --b: #b38f62; }
+.iso .m-lampshade { --b: #d5dcea; }
+.iso .m-lampshadetop { --b: #e4e9f3; }
+.iso .m-bulb { --b: #b9c3d6; }
+
+:root:not(.light) .iso .m-door { --b: #536fb8; }
+:root:not(.light) .iso .m-doorpanel { --b: #5f7fd0; }
+:root:not(.light) .iso .m-doorframe { --b: #4a5878; }
+:root:not(.light) .iso .m-doormat { --b: #8c6d4c; }
+:root:not(.light) .iso .m-doormatline { --b: #6e5439; }
+:root:not(.light) .iso .m-lampshade { --b: #5a6582; }
+:root:not(.light) .iso .m-lampshadetop { --b: #66728f; }
+:root:not(.light) .iso .m-bulb { --b: #4a5468; }
+
+.iso .m-lampglow {
+  fill: var(--iso-lamp);
+  stroke: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+:root.light .iso .m-lampglow {
+  opacity: 1;
+}
+
+:root.light .iso .m-lampshade { --b: #ffd976; }
+:root.light .iso .m-lampshadetop { --b: #ffe9a8; }
+:root.light .iso .m-bulb { --b: #fff6cf; }
+
+.hm-hot {
+  position: absolute;
+  z-index: 2;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  translate: -50% -50%;
+}
+
+.hm-hot.door {
+  width: 2.5rem;
+  height: 4.5rem;
+  border-radius: 0.75rem;
+}
+
+.hm-hot:focus-visible {
+  outline: 2px solid var(--hm-blue);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .hm-hot {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .hm-hot.door {
+    width: 1.75rem;
+    height: 3rem;
+  }
+}
+
+/* Lock screen: the front door, shut, with the key in the lock. */
+.dsh-door {
+  width: 6.5rem;
+  height: auto;
+}
+
+.dsh-door-wall { fill: var(--hm-tint); }
+.dsh-door-frame { fill: var(--d-card); }
+.dsh-door-leaf { fill: #7da2ff; }
+.dsh-door-panel { fill: #93b3f5; }
+.dsh-door-knob { fill: #d9b26f; }
+.dsh-door-lock { fill: #2a2f3d; }
+.dsh-door-mat { fill: #c9a678; }
+
+.dsh-door-key,
+.dsh-door-key-ring {
+  fill: none;
+  stroke: #f4c27a;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+:root:not(.light) .dsh-door-leaf { fill: #536fb8; }
+:root:not(.light) .dsh-door-panel { fill: #5f7fd0; }
+:root:not(.light) .dsh-door-mat { fill: #8c6d4c; }
+
+/* ------------------------------------------------------------------ objects that open a room
+   A clear button over the object (TV, laptop, bookcase, guitar, shoes, pinboard). On
+   hover only a tag with the room's name shows above it; keyboard focus adds an outline. */
+.hm-obj {
+  position: absolute;
+  z-index: 2;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  cursor: pointer;
+  translate: -50% -50%;
+}
+
+.hm-obj.work { --room: #2f6bff; }
+.hm-obj.books { --room: #c27a12; }
+.hm-obj.music { --room: #8a5cf0; }
+.hm-obj.tv { --room: #e0565b; }
+.hm-obj.links { --room: #13957a; }
+.hm-obj.run { --room: #d96a1c; }
+.hm-obj.pray { --room: #1f9d55; }
+.hm-obj.vocab { --room: #4f5bd5; }
+
+:root:not(.light) .hm-obj.work { --room: #7da2ff; }
+:root:not(.light) .hm-obj.books { --room: #f4c27a; }
+:root:not(.light) .hm-obj.music { --room: #b9a0ff; }
+:root:not(.light) .hm-obj.tv { --room: #ff9a9d; }
+:root:not(.light) .hm-obj.links { --room: #6fd8bd; }
+:root:not(.light) .hm-obj.run { --room: #ffad6b; }
+:root:not(.light) .hm-obj.pray { --room: #86e0a8; }
+:root:not(.light) .hm-obj.vocab { --room: #a5adff; }
+
+.hm-obj:focus-visible {
+  outline: 2px solid var(--room);
+  outline-offset: 2px;
+}
+
+/* The tag: a small white pill above the object. */
+.hm-tag {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.3125rem 0.75rem 0.3125rem 0.375rem;
+  border: 1px solid var(--d-edge);
+  border-radius: 999px;
+  background: var(--d-card);
+  box-shadow: var(--d-shadow);
+  color: var(--d-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  translate: -50% 0.25rem;
+  transition: opacity 0.15s, translate 0.15s;
+}
+
+.hm-hot .hm-tag {
+  padding-left: 0.75rem;
+}
+
+.hm-obj:hover .hm-tag,
+.hm-obj:focus-visible .hm-tag,
+.hm-hot:hover .hm-tag,
+.hm-hot:focus-visible .hm-tag {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+.hm-tag-ic {
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--room) 15%, var(--d-card));
+  color: var(--room);
+}
+
+.hm-tag-ic .glyph,
+.rm-ic .glyph {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Touch screens have no hover: the tags stay visible. */
+@media (hover: none) {
+  .hm-tag {
+    opacity: 1;
+    translate: -50% 0;
+    font-size: 0.6875rem;
+    padding: 0.1875rem 0.5rem 0.1875rem 0.25rem;
+  }
+
+  .hm-hot .hm-tag {
+    display: none;
+  }
+
+  .hm-tag-ic {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-obj,
+  .hm-tag {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ a room's page */
+.rm {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.rm.work { --room: #2f6bff; }
+.rm.books { --room: #c27a12; }
+.rm.music { --room: #8a5cf0; }
+.rm.tv { --room: #e0565b; }
+.rm.links { --room: #13957a; }
+.rm.run { --room: #d96a1c; }
+.rm.pray { --room: #1f9d55; }
+.rm.vocab { --room: #4f5bd5; }
+
+:root:not(.light) .rm.work { --room: #7da2ff; }
+:root:not(.light) .rm.books { --room: #f4c27a; }
+:root:not(.light) .rm.music { --room: #b9a0ff; }
+:root:not(.light) .rm.tv { --room: #ff9a9d; }
+:root:not(.light) .rm.links { --room: #6fd8bd; }
+:root:not(.light) .rm.run { --room: #ffad6b; }
+:root:not(.light) .rm.pray { --room: #86e0a8; }
+:root:not(.light) .rm.vocab { --room: #a5adff; }
+
+/* The room picture runs the full width of the window, edge to edge, with no frame. */
+.rm-hero {
+  position: relative;
+  width: 100vw;
+  margin: 0 calc(50% - 50vw);
+}
+
+.rm-door { --room: #2f6bff; }
+.rm-lamp { --room: #e0a21b; }
+
+.hm-tag.below {
+  top: calc(100% + 0.5rem);
+  bottom: auto;
+}
+
+.rm-door .hm-tag,
+.rm-lamp .hm-tag {
+  padding-left: 0.75rem;
+}
+
+.dsh:has(.rm) {
+  overflow-x: clip;
+}
+
+.pov {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.rm-head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.rm-ic {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--room) 15%, var(--d-card));
+  color: var(--room);
+}
+
+.rm-ic .glyph {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.rm-head h1 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--d-ink);
+}
+
+.rm-head p {
+  margin-top: 0.125rem;
+  font-size: 0.9375rem;
+  color: var(--d-muted);
+}
+
+.rm-soon {
+  font-size: 0.9375rem;
+  color: var(--d-body);
+}
+
+.rm-list {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.rm-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(4rem, 10rem) 3rem;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.875rem 0.5rem 0.5rem;
+  border: 1px solid var(--d-edge);
+  border-radius: 1rem;
+  background: var(--d-card);
+  color: var(--d-ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.rm-row:hover {
+  box-shadow: var(--d-shadow);
+}
+
+.rm-row:focus-visible {
+  outline: 2px solid var(--hm-blue);
+  outline-offset: 2px;
+}
+
+.rm-row.add {
+  grid-template-columns: auto minmax(0, 1fr);
+  border-style: dashed;
+  background: transparent;
+}
+
+.rm-row-tx {
+  display: grid;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.rm-row-tx b {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rm-row-tx span {
+  font-size: 0.8125rem;
+  color: var(--d-muted);
+}
+
+.rm-bar {
+  height: 0.375rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--hm-track);
+}
+
+.rm-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--hm-blue);
+}
+
+.rm-pct {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .rm-row {
+    grid-template-columns: auto minmax(0, 1fr) 2.75rem;
+  }
+
+  .rm-bar {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ room pictures (POV) */
+.pov rect,
+.pov circle,
+.pov ellipse,
+.pov path {
+  stroke: none;
+}
+
+.pov .p-wall { fill: #f4f7fc; }
+.pov .p-floor { fill: #f1e7da; }
+.pov .p-plank { fill: #e5d7c4; }
+.pov .p-skirt { fill: #e3e8f1; }
+.pov .p-shadow { fill: rgb(40 60 110 / 0.12); }
+.pov .p-white { fill: #ffffff; }
+.pov .p-trim { fill: #d5dcea; }
+.pov .p-glass { fill: #cfe3ff; }
+.pov .p-desk { fill: #ffffff; }
+.pov .p-cab { fill: #eef1f7; }
+.pov .p-metal { fill: #aab4c8; }
+.pov .p-metal-line { fill: none; stroke: #aab4c8; stroke-width: 5; stroke-linecap: round; }
+.pov .p-metal-line.thick { stroke-width: 8; }
+.pov .p-dark { fill: #2a2f3d; }
+.pov .p-laptop { fill: #dfe4ee; }
+.pov .p-code { fill: #8fb4ff; }
+.pov .p-code2 { fill: #9fe3cf; }
+.pov .p-mug { fill: #ffffff; }
+.pov .p-pot { fill: #f1e7da; }
+.pov .p-leaf { fill: #59b37f; }
+.pov .p-leaf2 { fill: #84cf9d; }
+.pov .p-leaf3 { fill: #a9dfb6; }
+.pov .p-chair { fill: #e4e9f3; }
+.pov .p-note { fill: #ffe08a; }
+.pov .p-note2 { fill: #b7e4d2; }
+.pov .p-note3 { fill: #ffc2bd; }
+.pov .p-cap { fill: #ffffff; font: 700 13px 'Plus Jakarta Sans Variable', system-ui, sans-serif; letter-spacing: 1.6px; opacity: 0.8; }
+.pov .p-num { fill: #ffffff; font: 700 46px 'Plus Jakarta Sans Variable', system-ui, sans-serif; letter-spacing: -1.5px; }
+.pov .p-tx { fill: #ffffff; font: 600 17px 'Plus Jakarta Sans Variable', system-ui, sans-serif; }
+.pov .p-shelf { fill: #e3c9a2; }
+.pov .p-shelfin { fill: #c9a678; }
+.pov .p-shelfedge { fill: #d9b98c; }
+.pov .p-bk1 { fill: #7da2ff; }
+.pov .p-bk2 { fill: #f4c27a; }
+.pov .p-bk3 { fill: #f3a6a0; }
+.pov .p-bk4 { fill: #84cf9d; }
+.pov .p-bk5 { fill: #c8b6ff; }
+.pov .p-rug { fill: #e3ebfa; }
+.pov .p-wood { fill: #e8d6b8; }
+.pov .p-wood2 { fill: #cdb48c; }
+.pov .p-shade { fill: #ffd976; }
+.pov .p-sofa { fill: #a9c4ff; }
+.pov .p-sofa2 { fill: #93b3f5; }
+.pov .p-cushion { fill: #c3d6ff; }
+.pov .p-record { fill: #2a2f3d; }
+.pov .p-groove { fill: #3a4152; }
+.pov .p-label { fill: #ff9a7a; }
+.pov .p-poster { fill: #ffd9c2; }
+.pov .p-purple { fill: #8a5cf0; }
+.pov .p-amp { fill: #3e4658; }
+.pov .p-ampface { fill: #d9b26f; }
+.pov .p-knob { fill: #f1f4f9; }
+.pov .p-grille { fill: #59627a; }
+.pov .p-guitar { fill: #e5a35a; }
+.pov .p-guitar2 { fill: #7a4b2c; }
+.pov .p-neck { fill: #8a5a3c; }
+.pov .p-hole { fill: #3a2c2a; }
+.pov .p-string { fill: #f1f4f9; opacity: 0.8; }
+.pov .p-stool { fill: #ffc9a8; }
+.pov .p-play { fill: #ffffff; }
+.pov .p-playbar { fill: #5f7fd0; }
+.pov .p-bowl { fill: #ff8a7a; }
+.pov .p-boardframe { fill: #d9c4a0; }
+.pov .p-cork { fill: #dcb98a; }
+.pov .p-card1 { fill: #2f6bff; }
+.pov .p-card2 { fill: #e75b9b; }
+.pov .p-card3 { fill: #ff5a4f; }
+.pov .p-card4 { fill: #2a2f3d; }
+.pov .p-pin { fill: #ff5a4f; }
+.pov path.p-string { fill: none; stroke: #ff5a4f; stroke-width: 2; stroke-dasharray: 6 4; opacity: 1; }
+.pov .p-carton { fill: #e3c39a; }
+.pov .p-carton2 { fill: #ecd0ab; }
+.pov .p-cartonline { fill: #c9a678; }
+.pov .p-sole { fill: #ffffff; }
+.pov .p-orange { fill: #ff8a3d; }
+.pov .p-blue { fill: #5b8cff; }
+.pov .p-pink { fill: #ff6fa5; }
+.pov .p-lime { fill: #b6e05a; }
+.pov .p-gold { fill: #f4c27a; }
+.pov .p-gold2 { fill: #ffe08a; }
+.pov .p-display { fill: #7fd1c0; }
+.pov .p-bottle { fill: #8fd3ff; }
+
+:root:not(.light) .pov .p-wall { fill: #232c44; }
+:root:not(.light) .pov .p-floor { fill: #2a3450; }
+:root:not(.light) .pov .p-plank { fill: #222b43; }
+:root:not(.light) .pov .p-skirt { fill: #2c3752; }
+:root:not(.light) .pov .p-shadow { fill: rgb(0 0 0 / 0.3); }
+:root:not(.light) .pov .p-white { fill: #3a4766; }
+:root:not(.light) .pov .p-trim { fill: #4a5878; }
+:root:not(.light) .pov .p-glass { fill: #3d5c9c; }
+:root:not(.light) .pov .p-desk { fill: #e6e9f1; }
+:root:not(.light) .pov .p-cab { fill: #c9cfdc; }
+:root:not(.light) .pov .p-chair { fill: #9aa6bf; }
+:root:not(.light) .pov .p-shelf { fill: #8c6d4c; }
+:root:not(.light) .pov .p-shelfin { fill: #4e3b2a; }
+:root:not(.light) .pov .p-shelfedge { fill: #7a5d3f; }
+:root:not(.light) .pov .p-rug { fill: #2b3858; }
+:root:not(.light) .pov .p-wood { fill: #8c6d4c; }
+:root:not(.light) .pov .p-wood2 { fill: #6e5439; }
+:root:not(.light) .pov .p-sofa { fill: #5f7fd0; }
+:root:not(.light) .pov .p-sofa2 { fill: #536fb8; }
+:root:not(.light) .pov .p-cushion { fill: #7393e0; }
+:root:not(.light) .pov .p-poster { fill: #c99a80; }
+:root:not(.light) .pov .p-boardframe { fill: #7a5d3f; }
+:root:not(.light) .pov .p-cork { fill: #a8865c; }
+:root:not(.light) .pov .p-carton { fill: #a8865c; }
+:root:not(.light) .pov .p-carton2 { fill: #b8966b; }
+:root:not(.light) .pov .p-sole { fill: #e6e9f1; }
+:root:not(.light) .pov .p-shade { fill: #5a6582; }
+
+/* On a room's page the picture starts at the very top of the window. Its own door and
+   lamp are the way back and the theme switch; the key sits at the end of the title row. */
+.dsh-frame:has(.rm) {
+  padding-top: 0;
+}
+
+.rm-lock {
+  margin-left: auto;
+}
+
+
+/* The door and the lamp in a room's picture. */
+.pov .p-door { fill: #7da2ff; }
+.pov .p-doorpanel { fill: #93b3f5; }
+.pov .p-doormat { fill: #c9a678; }
+.pov .p-lampshade { fill: #d5dcea; }
+.pov .p-bulb { fill: #b9c3d6; }
+.pov .p-lampglow { opacity: 0; transition: opacity 0.3s; }
+
+:root.light .pov .p-lampshade { fill: #ffd976; }
+:root.light .pov .p-bulb { fill: #fff6cf; }
+:root.light .pov .p-lampglow { opacity: 1; }
+
+:root:not(.light) .pov .p-door { fill: #536fb8; }
+:root:not(.light) .pov .p-doorpanel { fill: #5f7fd0; }
+:root:not(.light) .pov .p-doormat { fill: #8c6d4c; }
+:root:not(.light) .pov .p-lampshade { fill: #5a6582; }
+:root:not(.light) .pov .p-bulb { fill: #4a5468; }
+
+/* Prayer room */
+.iso .m-sajadah { --b: #2f8f5b; }
+.iso .m-sajadah2 { --b: #4fb07a; }
+.iso .m-gold { --b: #e6b85c; }
+.iso .m-callig { --b: #1f6e46; }
+.iso .m-quran { --b: #1f6e46; }
+.iso .m-peci { --b: #ffffff; }
+.iso .m-lanternglass { --b: #ffe7a8; }
+:root:not(.light) .iso .m-peci { --b: #e6e9f1; }
+
+.pov .p-mihrab { fill: #e8eef8; }
+.pov .p-mihrab2 { fill: #dde6f4; }
+.pov .p-sajadah { fill: #2f8f5b; }
+.pov .p-sajadah2 { fill: #4fb07a; }
+.pov .p-callig { fill: #1f6e46; }
+.pov .p-quran { fill: #1f6e46; }
+.pov .p-gold { fill: #e6b85c; }
+.pov .p-lantern { fill: #ffe7a8; }
+.pov .p-metal-line.wood { stroke: #cdb48c; stroke-width: 6; }
+:root:not(.light) .pov .p-mihrab { fill: #2b3654; }
+:root:not(.light) .pov .p-mihrab2 { fill: #313d5e; }
+:root:not(.light) .pov .p-metal-line.wood { stroke: #8c6d4c; }
+
+/* Vocabulary room */
+.iso .m-chalkboard { --b: #2f5d4a; }
+.iso .m-chalk { --b: #f4f7fc; }
+.iso .m-chalk2 { --b: #ffe08a; }
+.iso .m-globe { --b: #5b8cff; }
+
+.pov .p-chalkboard { fill: #2f5d4a; }
+.pov .p-chalk { fill: #f4f7fc; font: 600 20px 'Plus Jakarta Sans Variable', system-ui, sans-serif; }
+.pov .p-chalk.title { font-size: 30px; font-weight: 700; }
+.pov .p-chalk-id { fill: #ffe08a; font-weight: 500; }
+.pov .p-chalk-line { fill: #f4f7fc; opacity: 0.7; }
+.pov .p-flag { fill: #ffffff; font: 700 15px 'Plus Jakarta Sans Variable', system-ui, sans-serif; text-anchor: middle; }
+.pov .p-block { fill: #2a2f3d; font: 800 22px 'Plus Jakarta Sans Variable', system-ui, sans-serif; text-anchor: middle; }
+.pov .p-globe { fill: #5b8cff; }
+.pov .p-metal-line.string { stroke-width: 2; }

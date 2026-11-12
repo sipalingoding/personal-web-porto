@@ -1,7 +1,11 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { KeyGate, useAdminKey, useNoIndex } from '../admin/DataProject';
 import { ApiError, adminRequest } from '../data/api';
 import { useTheme, type Theme } from '../hooks/useTheme';
+import { HomeView } from './Home';
+import { HouseContext } from './houseContext';
+import type { RoomKey } from './isoScene';
+import { RoomPage, roomHref, rooms } from './Rooms';
 import ProjectBoard from './ProjectBoard';
 import '../admin/admin.css';
 import '@fontsource-variable/plus-jakarta-sans';
@@ -13,27 +17,35 @@ import './dashboard.css';
  */
 const BASE = '/mydashboard';
 
-/** "/mydashboard/project/12" opens project 12; any other address under /mydashboard shows the overview. */
-function openIdFromPath(path: string): number | null {
-  const m = /^\/mydashboard\/project\/(\d+)\/?$/.exec(path);
-  return m ? Number(m[1]) : null;
+/** The house (front page), a room's page, or a project's page. */
+type Route = { kind: 'home' } | { kind: 'room'; room: RoomKey } | { kind: 'project'; id: number };
+
+/** "/mydashboard/project/12" is project 12, "/mydashboard/baca" a room; anything else under /mydashboard is the house. */
+function routeOf(path: string): Route {
+  const p = /^\/mydashboard\/project\/(\d+)\/?$/.exec(path);
+  if (p) return { kind: 'project', id: Number(p[1]) };
+  const r = /^\/mydashboard\/([a-z]+)\/?$/.exec(path);
+  const room = r && rooms.find((x) => x.slug === r[1]);
+  return room ? { kind: 'room', room: room.key } : { kind: 'home' };
 }
 
-/** Follows the address bar so back/forward and reloads land on the same project. */
-function useOpenProject() {
-  const [openId, setOpenId] = useState(() => openIdFromPath(window.location.pathname));
+const hrefOf = (to: Route) => (to.kind === 'home' ? BASE : to.kind === 'room' ? roomHref(to.room) : `${BASE}/project/${to.id}`);
+
+/** Follows the address bar so back/forward and reloads land on the same page. */
+function useRoute() {
+  const [route, setRoute] = useState(() => routeOf(window.location.pathname));
   useEffect(() => {
-    const onPop = () => setOpenId(openIdFromPath(window.location.pathname));
+    const onPop = () => setRoute(routeOf(window.location.pathname));
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
-  const open = (id: number | null) => {
-    const href = id === null ? BASE : `${BASE}/project/${id}`;
+  const go = (to: Route) => {
+    const href = hrefOf(to);
     if (href !== window.location.pathname) window.history.pushState(null, '', href);
-    setOpenId(id);
+    setRoute(to);
     window.scrollTo(0, 0);
   };
-  return { openId, open };
+  return { route, go };
 }
 
 function Icon({ children }: { children: ReactNode }) {
@@ -44,24 +56,14 @@ function Icon({ children }: { children: ReactNode }) {
   );
 }
 
-/** Lets a link switch pages in place, while new-tab and modified clicks behave as normal links. */
-const follow = (onGo: () => void) => (e: MouseEvent<HTMLAnchorElement>) => {
-  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-  e.preventDefault();
-  onGo();
-};
-
-/** Switches between the light and dark look; the label names the theme it switches to. */
+/** A lamp that switches the theme: lit in the light theme, off in the dark one. */
 function ThemeButton({ theme, onToggle, className = '' }: { theme: Theme; onToggle: () => void; className?: string }) {
-  const label = theme === 'dark' ? 'Light mode' : 'Dark mode';
+  const label = theme === 'dark' ? 'Nyalakan lampu' : 'Matikan lampu';
   return (
     <button type="button" className={`dsh-link dsh-theme ${className}`.trim()} onClick={onToggle} aria-label={label}>
       <Icon>
-        {theme === 'dark' ? (
-          <path d="M8 5.25a2.75 2.75 0 1 1 0 5.5 2.75 2.75 0 0 1 0-5.5zM8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.58 3.58l1.06 1.06M11.36 11.36l1.06 1.06M3.58 12.42l1.06-1.06M11.36 4.64l1.06-1.06" />
-        ) : (
-          <path d="M13.25 9.6A5.5 5.5 0 1 1 6.4 2.75a4.5 4.5 0 0 0 6.85 6.85z" />
-        )}
+        <path d="M6.25 13.5h3.5M6.5 11.5h3M8 3a3.75 3.75 0 0 0-2.3 6.7c.5.4.8.9.8 1.8h3c0-.9.3-1.4.8-1.8A3.75 3.75 0 0 0 8 3z" />
+        {theme === 'light' && <path d="M8 .75v.75M2.9 2.9l.55.55M13.1 2.9l-.55.55M1 7.5h.75M14.25 7.5H15" />}
       </Icon>
       <span className="dsh-tip" aria-hidden="true">
         {label}
@@ -70,26 +72,18 @@ function ThemeButton({ theme, onToggle, className = '' }: { theme: Theme; onTogg
   );
 }
 
-/** Brand on the left; theme switch and lock on the right. Shown above every view. */
-function TopBar(props: { onHome: () => void; onLock: () => void; theme: Theme; onTheme: () => void }) {
+/** Lamp (theme) and front-door key (lock) at the top right of a project page. */
+function TopBar(props: { onLock: () => void; theme: Theme; onTheme: () => void }) {
   return (
     <header className="dsh-top">
-      <a href={BASE} className="dsh-brand" onClick={follow(props.onHome)}>
-        <span className="dsh-brand-mk" aria-hidden="true">
-          <svg viewBox="0 0 16 16">
-            <path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h4v4H9z" />
-          </svg>
-        </span>
-        MyDashboard
-      </a>
       <div className="dsh-top-end">
         <ThemeButton theme={props.theme} onToggle={props.onTheme} />
-        <button type="button" className="dsh-link dsh-lock" onClick={props.onLock} aria-label="Lock">
+        <button type="button" className="dsh-link dsh-lock" onClick={props.onLock} aria-label="Kunci pintu (lock)">
           <Icon>
-            <path d="M4 7.5h8a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V8a.5.5 0 0 1 .5-.5zM5.5 7.5V5.25a2.5 2.5 0 0 1 5 0V7.5" />
+            <path d="M10.25 2.5a3.25 3.25 0 1 1-2.9 4.72L2.5 12.1v1.4h1.75v-1.25H5.5V11h1.25l1.33-1.33A3.25 3.25 0 0 1 10.25 2.5zM11 5.25h.01" />
           </Icon>
           <span className="dsh-tip" aria-hidden="true">
-            Lock
+            Kunci pintu
           </span>
         </button>
       </div>
@@ -97,9 +91,29 @@ function TopBar(props: { onHome: () => void; onLock: () => void; theme: Theme; o
   );
 }
 
+/** The house's front door, shut, with the key in the lock: the picture on the lock screen. */
+function FrontDoor() {
+  return (
+    <svg className="dsh-door" viewBox="0 0 120 150" aria-hidden="true">
+      <rect className="dsh-door-wall" x="0" y="0" width="120" height="150" rx="18" />
+      <rect className="dsh-door-frame" x="26" y="22" width="68" height="118" rx="5" />
+      <rect className="dsh-door-leaf" x="31" y="27" width="58" height="113" rx="3" />
+      <rect className="dsh-door-panel" x="37" y="34" width="20" height="44" rx="2" />
+      <rect className="dsh-door-panel" x="63" y="34" width="20" height="44" rx="2" />
+      <rect className="dsh-door-panel" x="37" y="86" width="20" height="46" rx="2" />
+      <rect className="dsh-door-panel" x="63" y="86" width="20" height="46" rx="2" />
+      <rect className="dsh-door-knob" x="74" y="80" width="11" height="4" rx="2" />
+      <circle className="dsh-door-lock" cx="79" cy="92" r="2.2" />
+      <path className="dsh-door-key" d="M79 94v10M79 101h3M79 104h2" />
+      <circle className="dsh-door-key-ring" cx="79" cy="108" r="3.5" />
+      <rect className="dsh-door-mat" x="20" y="140" width="80" height="6" rx="3" />
+    </svg>
+  );
+}
+
 export default function Dashboard() {
   const { theme, toggle } = useTheme();
-  const { openId, open } = useOpenProject();
+  const { route, go } = useRoute();
   useNoIndex('My dashboard');
   const { adminKey, unlock, lock } = useAdminKey();
 
@@ -117,10 +131,8 @@ export default function Dashboard() {
       <div className="dsh dsh-gate">
         <ThemeButton theme={theme} onToggle={toggle} className="dsh-gate-theme" />
         <main className="dsh-gate-card">
-          <span className="ix">
-            <b>/</b>mydashboard
-          </span>
-          <h1>My dashboard</h1>
+          <FrontDoor />
+          <h1>Pintu terkunci</h1>
           <KeyGate onUnlock={unlock} iconOnly />
         </main>
       </div>
@@ -128,13 +140,28 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="dsh">
-      <div className="dsh-frame">
-        <TopBar onHome={() => open(null)} onLock={lock} theme={theme} onTheme={toggle} />
-        <main className="dsh-main">
-          <ProjectBoard adminKey={adminKey} onLocked={lock} openId={openId} onOpen={open} />
-        </main>
+    <HouseContext.Provider value={{ theme, onTheme: toggle, onLock: lock }}>
+      <div className="dsh">
+        <div className="dsh-frame">
+          {/* The house and the room pages have their own lamp and key; only a project page has the bar. */}
+          {route.kind === 'project' && <TopBar onLock={lock} theme={theme} onTheme={toggle} />}
+          <main className="dsh-main">
+            {route.kind === 'home' ? (
+              <HomeView onRoom={(room) => go({ kind: 'room', room })} />
+            ) : route.kind === 'room' && route.room !== 'work' ? (
+              <RoomPage room={route.room} onHome={() => go({ kind: 'home' })} />
+            ) : (
+              <ProjectBoard
+                adminKey={adminKey}
+                onLocked={lock}
+                openId={route.kind === 'project' ? route.id : null}
+                onOpen={(id) => go({ kind: 'project', id })}
+                onRoom={(room) => go(room ? { kind: 'room', room } : { kind: 'home' })}
+              />
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </HouseContext.Provider>
   );
 }

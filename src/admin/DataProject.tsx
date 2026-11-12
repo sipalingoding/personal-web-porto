@@ -769,7 +769,7 @@ export function KeyGate({ onUnlock, iconOnly = false }: { onUnlock: (key: string
           {status.text}
         </p>
         {iconOnly ? (
-          <IconButton type="submit" icon="unlock" label="Unlock" tone="p" busy={status.kind === 'busy'} />
+          <IconButton type="submit" icon="key" label="Buka pintu" tone="p" busy={status.kind === 'busy'} />
         ) : (
           <button type="submit" className="btn p" disabled={status.kind === 'busy'}>
             {status.kind === 'busy' ? 'Checking…' : 'Unlock'}
