@@ -59,8 +59,8 @@ function Frame({ label, children }: { label: string; children: (ids: Ids) => Rea
     <svg className="pov" viewBox={`${VB.x} 0 ${VB.w} ${VB.h}`} role="img" aria-label={label}>
       <defs>
         <linearGradient id={`${id}-s`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#3a63c9" />
-          <stop offset="1" stopColor="#1b2a52" />
+          <stop offset="0" stopColor="#3f55ea" />
+          <stop offset="1" stopColor="#1a2260" />
         </linearGradient>
         <radialGradient id={`${id}-g`}>
           <stop offset="0" stopColor="#ffc94a" stopOpacity="0.45" />

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties, type DragEvent, type FormEvent, type ReactNode } from 'react';
 import { ApiError, adminRequest } from '../data/api';
 import {
   BOARD_LIMITS,
@@ -16,7 +16,9 @@ import {
   type BoardTask,
 } from '../data/board';
 import { Glyph, IconButton } from './icons';
+import { BurnChart, FeatureBars, Ring, StatusBar, type FeatureRow } from './charts';
 import { RoomPage, WorkRoomPage } from './Rooms';
+import { burnUp, countsOf } from './stats';
 
 type Api = <T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown) => Promise<T>;
 
@@ -48,7 +50,7 @@ function moveTask(tasks: BoardTask[], id: number, status: BoardStatus, beforeId:
 
 /* ------------------------------------------------------------------ dialogs */
 
-function Modal(props: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
+export function Modal(props: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   const headingId = useId();
   useEffect(() => {
@@ -75,7 +77,7 @@ function Modal(props: { title: string; onClose: () => void; children: ReactNode;
 }
 
 /** Save and delete row shared by both forms; delete asks once more before it runs. */
-function FormActions(props: { busy: boolean; isNew: boolean; deleteText: ReactNode; onDelete: () => void; error: string }) {
+export function FormActions(props: { busy: boolean; isNew: boolean; deleteText: ReactNode; onDelete: () => void; error: string }) {
   const [confirming, setConfirming] = useState(false);
   return (
     <>
@@ -830,37 +832,6 @@ type Dialog =
   | { type: 'task'; task: BoardTask | null; status: BoardStatus }
   | { type: 'notes' };
 
-/** Share of a project's tasks that are done, as a whole percent; null when it has none. */
-
-function progressOf(tasks: BoardTask[]) {
-  if (tasks.length === 0) return null;
-  return Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100);
-}
-
-function Progress({ tasks, large = false }: { tasks: BoardTask[]; large?: boolean }) {
-  const pct = progressOf(tasks);
-  const done = tasks.filter((t) => t.status === 'done').length;
-  return (
-    <div className={['pj-prog', large && 'lg', pct === 100 && 'complete'].filter(Boolean).join(' ')}>
-      <div className="pj-prog-row">
-        <b>{pct === null ? '–' : `${pct}%`}</b>
-        <span>{pct === null ? 'Belum ada task' : `${done} dari ${tasks.length} task selesai`}</span>
-      </div>
-      <span
-        className="pj-bar"
-        role="progressbar"
-        aria-label="Progress task"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={pct ?? 0}
-      >
-        <i style={{ width: `${pct ?? 0}%` }} />
-      </span>
-    </div>
-  );
-}
-
-
 export default function ProjectBoard(props: {
   adminKey: string;
   onLocked: () => void;
@@ -932,7 +903,7 @@ export default function ProjectBoard(props: {
         {status}
       </RoomPage>
     ) : (
-      status
+      <div className="pj-detail">{status}</div>
     );
   }
 
@@ -1077,6 +1048,14 @@ export default function ProjectBoard(props: {
   const shown =
     activeFeature === null ? own : own.filter((t) => (activeFeature === 'none' ? t.featureId === null : t.featureId === activeFeature));
   const noteCount = board.notes.filter((n) => n.projectId === project.id).length;
+  const counts = countsOf(own);
+  const burn = burnUp(own);
+  const featureRows: FeatureRow[] = projectFeatures.map((f) => {
+    const mine = own.filter((t) => t.featureId === f.id);
+    return { name: f.name, done: mine.filter((t) => t.status === 'done').length, total: mine.length };
+  });
+  const loose = own.filter((t) => t.featureId === null);
+  if (featureRows.length > 0 && loose.length > 0) featureRows.push({ name: 'Tanpa fitur', done: loose.filter((t) => t.status === 'done').length, total: loose.length, muted: true });
 
   /* Dragging: the drop position is worked out from the pointer against the cards' middles. */
   const onDragOver = (status: BoardStatus) => (e: DragEvent<HTMLDivElement>) => {
@@ -1113,29 +1092,16 @@ export default function ProjectBoard(props: {
 
   return (
     <div className="pj-detail">
-      <a
-        className="pj-back"
-        aria-label="Ruang Kerja"
-        title="Ruang Kerja"
-        href="/mydashboard/kerja"
-        onClick={(e) => {
-          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-          e.preventDefault();
-          props.onRoom('work');
-        }}
-      >
-        <Glyph name="door" />
-      </a>
-
-      <section className="pj-hero" aria-label="Detail project">
-        <div className="pj-hero-main">
-          <div className="pj-hero-title">
-            <span className={`kb-sq ${project.kind.toLowerCase()}`} aria-hidden="true">
+      <header className="pj-head">
+        <div className="pj-head-main">
+          <div className="pj-title">
+            <span className={`pj-init lg ${project.kind.toLowerCase()}`} aria-hidden="true">
               {project.title.trim().charAt(0).toUpperCase()}
             </span>
             <h1>{project.title}</h1>
-            <span className={`kb-kind ${project.kind.toLowerCase()}`}>{project.kind}</span>
+            <span className={`pj-kind ${project.kind.toLowerCase()}`}>{project.kind}</span>
           </div>
+          {project.description && <p className="pj-desc">{project.description}</p>}
           {(project.links ?? []).length > 0 && (
             <ul className="pj-links" aria-label="Link project">
               {project.links.map((l, i) => (
@@ -1143,34 +1109,56 @@ export default function ProjectBoard(props: {
                   <a href={l.url} target="_blank" rel="noreferrer" title={l.url}>
                     <Glyph name="link" />
                     <span>{l.label || shortUrl(l.url)}</span>
-                    <span className="pj-link-go" aria-hidden="true">
-                      ↗
-                    </span>
                   </a>
                 </li>
               ))}
             </ul>
           )}
-          {project.description && <p className="pj-hero-desc">{project.description}</p>}
         </div>
-        <div className="pj-hero-side">
-          <Progress tasks={own} large />
-          <div className="pj-hero-actions">
-            <span className="pj-notes">
-              <IconButton
-                icon="note"
-                label={`Notes, ${noteCount} ${noteCount === 1 ? 'note' : 'notes'}`}
-                onClick={() => setDialog({ type: 'notes' })}
-              />
-              {noteCount > 0 && (
-                <span className="pj-notes-n" aria-hidden="true">
-                  {noteCount}
-                </span>
+        <div className="pj-actions">
+          <button type="button" className="bt" onClick={() => setDialog({ type: 'notes' })}>
+            <Glyph name="note" />
+            Notes
+            {noteCount > 0 && <span className="bt-n">{noteCount}</span>}
+          </button>
+          <button type="button" className="bt" onClick={() => setDialog({ type: 'project', project })}>
+            <Glyph name="pencil" />
+            Edit
+          </button>
+        </div>
+      </header>
+
+      <section className={featureRows.length > 0 ? 'pj-graphs three' : 'pj-graphs'} aria-label="Grafik project">
+        <div className="dc pj-g-prog">
+          <h2 className="dc-hd">Progress</h2>
+          <div className="ws-top">
+            <Ring pct={counts.pct} size={104} stroke={9} label={counts.pct === null ? 'Belum ada task' : `${counts.pct}% task selesai`} />
+            <p className="ws-lead">
+              {counts.total === 0 ? (
+                'Belum ada task.'
+              ) : (
+                <>
+                  <b>{counts.done}</b> dari <b>{counts.total}</b> task selesai
+                </>
               )}
-            </span>
-            <IconButton icon="pencil" label="Edit project" onClick={() => setDialog({ type: 'project', project })} />
+            </p>
           </div>
+          <StatusBar counts={counts} />
         </div>
+        <div className="dc pj-g-burn">
+          <h2 className="dc-hd">Task dibuat dan selesai, total berjalan</h2>
+          {burn.length > 1 ? (
+            <BurnChart points={burn} />
+          ) : (
+            <p className="dc-note">Grafik ini muncul setelah task pertama dibuat. Tambahkan task lewat tombol + di salah satu kolom.</p>
+          )}
+        </div>
+        {featureRows.length > 0 && (
+          <div className="dc pj-g-feat">
+            <h2 className="dc-hd">Selesai per fitur</h2>
+            <FeatureBars rows={featureRows} />
+          </div>
+        )}
       </section>
 
       {errorBox}
@@ -1256,8 +1244,8 @@ export default function ProjectBoard(props: {
                   onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setDrop(null)}
                   onDrop={onDrop}
                 >
-                  {list.map((t) => (
-                    <div key={t.id} className="kb-slot">
+                  {list.map((t, i) => (
+                    <div key={t.id} className="kb-slot" style={{ ['--i' as string]: Math.min(i, 12) } as CSSProperties}>
                       {isTarget && drop.before === t.id && dragId !== t.id && <div className="kb-drop" aria-hidden="true" />}
                       {/* A div rather than a button: Firefox will not drag a button. */}
                       <div

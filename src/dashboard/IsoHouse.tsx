@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { behind, buildScene, proj, type RoomKey, type Shape, type Slot } from './isoScene';
 
 /*
@@ -6,7 +6,9 @@ import { behind, buildScene, proj, type RoomKey, type Shape, type Slot } from '.
  * is a material class (m-desk, m-shirt…) whose faces are shaded top (t), left (l), right (r),
  * so the colours follow the light and dark theme from CSS. Soft shadows, the light pools
  * on the floor and the screens use the filter and gradients defined here. One character
- * lives in the house and walks to whichever room is picked.
+ * lives in the house and walks to whichever room is picked. On first paint the house is put
+ * together piece by piece, back to front; the room pointed at (`hot`) lights its floor and
+ * lifts its object, and the room the character is in keeps a fainter light.
  */
 export const scene = buildScene();
 
@@ -75,7 +77,7 @@ function reducedMotion() {
  * While walking, the figure is moved between the scene's groups every frame, so whatever
  * stands in front of it on the floor hides it.
  */
-export default function IsoHouse({ room, onArrive }: { room: RoomKey; onArrive?: (room: RoomKey) => void }) {
+export default function IsoHouse({ room, hot = null, onArrive }: { room: RoomKey; hot?: RoomKey | null; onArrive?: (room: RoomKey) => void }) {
   const id = useId().replace(/:/g, '');
   const ref = (name: string) => `url(#${id}-${name})`;
   const [shown, setShown] = useState<RoomKey | null>(room);
@@ -150,6 +152,20 @@ export default function IsoHouse({ room, onArrive }: { room: RoomKey; onArrive?:
     return () => cancelAnimationFrame(frame);
   }, [walk]);
 
+  // Pointing at a room and being in one only switch classes, so the two thousand shapes are not drawn again.
+  useEffect(() => {
+    const root = svg.current;
+    if (!root) return;
+    root.querySelectorAll('.is-hot').forEach((el) => el.classList.remove('is-hot'));
+    if (hot) root.querySelectorAll(`.z-${hot}, [data-key="${hot}"]`).forEach((el) => el.classList.add('is-hot'));
+  }, [hot]);
+  useEffect(() => {
+    const root = svg.current;
+    if (!root) return;
+    root.querySelectorAll('.is-here').forEach((el) => el.classList.remove('is-here'));
+    if (shown) root.querySelector(`.z-${shown}`)?.classList.add('is-here');
+  }, [shown]);
+
   const draw = (s: Shape, i: number): ReactNode => {
     if (s.k === 'slot') return <Countdown key={i} slot={s} />;
     if (s.k === 'actor') {
@@ -165,6 +181,17 @@ export default function IsoHouse({ room, onArrive }: { room: RoomKey; onArrive?:
     return <ellipse key={i} className={cls} cx={s.cx.toFixed(1)} cy={s.cy.toFixed(1)} rx={s.rx.toFixed(1)} ry={s.ry.toFixed(1)} />;
   };
 
+  const groups = useMemo(
+    () =>
+      scene.groups.map((g, gi) => (
+        <g key={gi} className="iso-group" data-key={g.key} style={{ ['--i' as string]: gi } as CSSProperties}>
+          {g.shapes.map(draw)}
+        </g>
+      )),
+    // The shapes are fixed; only which room shows the character changes.
+    [shown],
+  );
+
   const start = walk ? proj(walk.pts[0][0], walk.pts[0][1], 0) : null;
   return (
     <svg
@@ -173,11 +200,14 @@ export default function IsoHouse({ room, onArrive }: { room: RoomKey; onArrive?:
       viewBox={scene.viewBox}
       aria-hidden="true"
       focusable="false"
-      style={{ ['--iso-blur' as string]: ref('blur'), ['--iso-glow' as string]: ref('glow'), ['--iso-screen' as string]: ref('screen'), ['--iso-lamp' as string]: ref('lamp') }}
+      style={{ ['--iso-blur' as string]: ref('blur'), ['--iso-soft' as string]: ref('soft'), ['--iso-glow' as string]: ref('glow'), ['--iso-screen' as string]: ref('screen'), ['--iso-lamp' as string]: ref('lamp') }}
     >
       <defs>
         <filter id={`${id}-blur`} x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="3.5" />
+        </filter>
+        <filter id={`${id}-soft`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="16" />
         </filter>
         <radialGradient id={`${id}-glow`}>
           <stop offset="0" style={{ stopColor: 'var(--iso-light)', stopOpacity: 0.55 }} />
@@ -188,15 +218,11 @@ export default function IsoHouse({ room, onArrive }: { room: RoomKey; onArrive?:
           <stop offset="1" stopColor="#ffc94a" stopOpacity="0" />
         </radialGradient>
         <linearGradient id={`${id}-screen`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#3a63c9" />
-          <stop offset="1" stopColor="#1b2a52" />
+          <stop offset="0" stopColor="#3f55ea" />
+          <stop offset="1" stopColor="#1a2260" />
         </linearGradient>
       </defs>
-      {scene.groups.map((g, gi) => (
-        <g key={gi} className="iso-group">
-          {g.shapes.map(draw)}
-        </g>
-      ))}
+      {groups}
       {walk && start && (
         <g key={walk.id} ref={walker} className="iso-walker" transform={`translate(${start[0].toFixed(1)} ${start[1].toFixed(1)})`}>
           <g ref={facing}>

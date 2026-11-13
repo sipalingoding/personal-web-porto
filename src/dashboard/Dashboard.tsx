@@ -1,12 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { KeyGate, useAdminKey, useNoIndex } from '../admin/DataProject';
 import { ApiError, adminRequest } from '../data/api';
+import { useJakartaClock } from '../hooks/useJakartaClock';
 import { useTheme, type Theme } from '../hooks/useTheme';
 import { HomeView } from './Home';
 import { HouseContext } from './houseContext';
 import type { RoomKey } from './isoScene';
-import { RoomPage, roomHref, rooms } from './Rooms';
+import { RoomPage, inPage, roomHref, roomOf, rooms } from './Rooms';
+import { todayLong } from './stats';
 import ProjectBoard from './ProjectBoard';
+import RunRoom from './RunRoom';
+import TvRoom from './TvRoom';
+import VocabRoom from './VocabRoom';
 import '../admin/admin.css';
 import '@fontsource-variable/plus-jakarta-sans';
 import './dashboard.css';
@@ -72,10 +77,43 @@ function ThemeButton({ theme, onToggle, className = '' }: { theme: Theme; onTogg
   );
 }
 
-/** Lamp (theme) and front-door key (lock) at the top right of a project page. */
-function TopBar(props: { onLock: () => void; theme: Theme; onTheme: () => void }) {
+/** A small house, the dashboard's mark. */
+function Mark() {
+  return (
+    <svg className="dsh-mark" viewBox="0 0 20 20" aria-hidden="true">
+      <path className="a" d="M10 2.5 17.5 6.8v8.4L10 19.5V11z" />
+      <path className="b" d="M10 2.5 2.5 6.8v8.4L10 19.5V11z" />
+      <path className="c" d="M10 2.5 17.5 6.8 10 11 2.5 6.8z" />
+    </svg>
+  );
+}
+
+/**
+ * The bar on every page: where you are in the house (each step a link back), today's date
+ * and the time in Jakarta, the lamp (theme) and the front-door key (lock).
+ */
+function TopBar(props: { route: Route; go: (to: Route) => void; onLock: () => void; theme: Theme; onTheme: () => void }) {
+  const time = useJakartaClock();
+  const { route, go } = props;
+  const room = route.kind === 'room' ? route.room : route.kind === 'project' ? 'work' : null;
   return (
     <header className="dsh-top">
+      <nav className="dsh-crumbs" aria-label="Lokasi">
+        <a href={BASE} aria-current={route.kind === 'home' ? 'page' : undefined} onClick={inPage(() => go({ kind: 'home' }))}>
+          <Mark />
+          Rumah
+        </a>
+        {room && (
+          <a href={roomHref(room)} aria-current={route.kind === 'room' ? 'page' : undefined} onClick={inPage(() => go({ kind: 'room', room }))}>
+            {roomOf(room).name}
+          </a>
+        )}
+        {route.kind === 'project' && <span aria-current="page">Project</span>}
+      </nav>
+      <p className="dsh-now">
+        <span>{todayLong()}</span>
+        <time>{time}</time>
+      </p>
       <div className="dsh-top-end">
         <ThemeButton theme={props.theme} onToggle={props.onTheme} />
         <button type="button" className="dsh-link dsh-lock" onClick={props.onLock} aria-label="Kunci pintu (lock)">
@@ -141,26 +179,29 @@ export default function Dashboard() {
 
   return (
     <HouseContext.Provider value={{ theme, onTheme: toggle, onLock: lock }}>
-      <div className="dsh">
-        <div className="dsh-frame">
-          {/* The house and the room pages have their own lamp and key; only a project page has the bar. */}
-          {route.kind === 'project' && <TopBar onLock={lock} theme={theme} onTheme={toggle} />}
-          <main className="dsh-main">
-            {route.kind === 'home' ? (
-              <HomeView onRoom={(room) => go({ kind: 'room', room })} />
-            ) : route.kind === 'room' && route.room !== 'work' ? (
-              <RoomPage room={route.room} onHome={() => go({ kind: 'home' })} />
-            ) : (
-              <ProjectBoard
-                adminKey={adminKey}
-                onLocked={lock}
-                openId={route.kind === 'project' ? route.id : null}
-                onOpen={(id) => go({ kind: 'project', id })}
-                onRoom={(room) => go(room ? { kind: 'room', room } : { kind: 'home' })}
-              />
-            )}
-          </main>
-        </div>
+      <div className={`dsh at-${route.kind}`}>
+        <TopBar route={route} go={go} onLock={lock} theme={theme} onTheme={toggle} />
+        <main className="dsh-main">
+          {route.kind === 'home' ? (
+            <HomeView adminKey={adminKey} onLocked={lock} onRoom={(room) => go({ kind: 'room', room })} />
+          ) : route.kind === 'room' && route.room === 'run' ? (
+            <RunRoom adminKey={adminKey} onLocked={lock} onHome={() => go({ kind: 'home' })} />
+          ) : route.kind === 'room' && route.room === 'vocab' ? (
+            <VocabRoom adminKey={adminKey} onLocked={lock} onHome={() => go({ kind: 'home' })} />
+          ) : route.kind === 'room' && route.room === 'tv' ? (
+            <TvRoom adminKey={adminKey} onLocked={lock} onHome={() => go({ kind: 'home' })} />
+          ) : route.kind === 'room' && route.room !== 'work' ? (
+            <RoomPage room={route.room} onHome={() => go({ kind: 'home' })} onWork={() => go({ kind: 'room', room: 'work' })} />
+          ) : (
+            <ProjectBoard
+              adminKey={adminKey}
+              onLocked={lock}
+              openId={route.kind === 'project' ? route.id : null}
+              onOpen={(id) => go({ kind: 'project', id })}
+              onRoom={(room) => go(room ? { kind: 'room', room } : { kind: 'home' })}
+            />
+          )}
+        </main>
       </div>
     </HouseContext.Provider>
   );

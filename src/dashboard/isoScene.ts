@@ -804,7 +804,7 @@ function walkPose(pose: 'a' | 'b') {
   return w.shapes;
 }
 
-type Item = { b: Bounds; draw: (g: Layer) => void };
+type Item = { b: Bounds; draw: (g: Layer) => void; key?: RoomKey };
 
 /**
  * Back-to-front order for things standing on the floor: A goes before B when it lies wholly
@@ -825,7 +825,7 @@ function order(items: Item[]): Item[] {
 }
 
 /** Shapes of one thing on the floor and its footprint; the first group (floor, outer walls) has none. */
-export type Group = { b: Bounds | null; shapes: Shape[] };
+export type Group = { b: Bounds | null; shapes: Shape[]; /** Set on the object that opens this room's page. */ key?: RoomKey };
 
 export type Scene = {
   /** Back to front, one group per thing, so someone walking can be slotted in between them. */
@@ -835,6 +835,8 @@ export type Scene = {
   height: number;
   /** The object that opens each room's page (TV, laptop, bookcase…), as a box in percent of the picture. */
   objects: Record<RoomKey, { x: number; y: number; w: number; h: number }>;
+  /** Where each room's numbered pin sits: just above its object, in percent of the picture. */
+  pins: Record<RoomKey, { x: number; y: number }>;
   /** The theme lamp and the front door, in percent of the picture, for their buttons. */
   lamp: { x: number; y: number };
   door: { x: number; y: number };
@@ -848,6 +850,9 @@ export function buildScene(): Scene {
   const g = new Layer();
 
   // Floor plate, then a floor per room with plank lines, rugs and light pools.
+  // The model's shadow on the table, then its base in two tiers.
+  g.floor('m-ground', 10, 10, X1 + T + 46, Y1 + T + 46, -22);
+  g.box('m-plinth', -T - 20, -T - 20, -20, X1 + T + 40, Y1 + T + 40, 8);
   g.box('m-plate', -T - 6, -T - 6, -12, X1 + T + 12, Y1 + T + 12, 12);
   const floors: Record<RoomKey, string> = { work: 'm-wood', books: 'm-wood2', music: 'm-tile', tv: 'm-wood', links: 'm-wood2', run: 'm-wood', pray: 'm-wood2', vocab: 'm-wood' };
   for (const [key, r] of Object.entries(rooms) as [RoomKey, (typeof rooms)[RoomKey]][]) {
@@ -858,6 +863,8 @@ export function buildScene(): Scene {
     } else {
       for (let y = r.y0 + 22; y < r.y1; y += 22) g.floor('m-plank', r.x0, y - 0.4, r.x1, y + 0.4, 0.35);
     }
+    // A tint over the room's floor, shown while the room is pointed at or occupied.
+    g.floor(`m-zone z-${key}`, r.x0, r.y0, r.x1, r.y1, 0.4);
   }
   g.floor('m-rug', 26, 110, 210, 210, 0.5);
   g.oval('m-rug', 446, 150, 0.5, 62);
@@ -901,7 +908,7 @@ export function buildScene(): Scene {
   g.front('m-posterart2', 0.3, 708, 744, 66, 70);
 
   const items: Item[] = [];
-  const add = (b: Bounds, draw: (l: Layer) => void) => items.push({ b, draw });
+  const add = (b: Bounds, draw: (l: Layer) => void, key?: RoomKey) => items.push({ b, draw, key });
   const plant = (x: number, y: number, s = 1) => add({ minX: x - 8, maxX: x + 8, minY: y - 8, maxY: y + 8 }, (l) => floorPlant(l, x, y, s));
   const wall = (x0: number, y0: number, x1: number, y1: number) =>
     add({ minX: x0, maxX: x1, minY: y0, maxY: y1 }, (l) => {
@@ -929,13 +936,13 @@ export function buildScene(): Scene {
   wall(940, ROW, X1, ROW + T);
 
   // Work room.
-  add({ minX: 20, maxX: 172, minY: 0, maxY: 100 }, (l) => workDesk(l, 20));
+  add({ minX: 20, maxX: 172, minY: 0, maxY: 100 }, (l) => workDesk(l, 20), 'work');
   add({ minX: 192, maxX: 338, minY: 0, maxY: 22 }, (l) => countdownScreen(l, 195));
   plant(332, 196, 1.2);
   plant(22, 200, 1);
 
   // Reading room.
-  add({ minX: 376, maxX: 478, minY: 0, maxY: 24 }, (l) => bookcase(l, 376, 102));
+  add({ minX: 376, maxX: 478, minY: 0, maxY: 24 }, (l) => bookcase(l, 376, 102), 'books');
   add({ minX: 422, maxX: 470, minY: 120, maxY: 162 }, (l) => readingChair(l, 426, 120));
   add({ minX: 490, maxX: 512, minY: 110, maxY: 132 }, (l) => floorLamp(l, 500, 120));
   add({ minX: 390, maxX: 412, minY: 160, maxY: 182 }, (l) => sideTable(l, 400, 170));
@@ -948,20 +955,20 @@ export function buildScene(): Scene {
     l.box('m-chairleg', 736, 34, 0, 16, 2, 2);
     l.box('m-chairleg', 743, 30, 0, 2, 12, 16);
     guitar(l, 744, 40, 12, 2);
-  });
+  }, 'music');
   add({ minX: 660, maxX: 690, minY: 120, maxY: 150 }, (l) => guitarist(l, 666, 122));
   add({ minX: 746, maxX: 768, minY: 150, maxY: 172 }, (l) => speaker(l, 746, 150));
   plant(764, 204, 1);
 
   // TV room.
-  add({ minX: 110, maxX: 300, minY: 236, maxY: 262 }, (l) => tvConsole(l, 110, 236));
+  add({ minX: 110, maxX: 300, minY: 236, maxY: 262 }, (l) => tvConsole(l, 110, 236), 'tv');
   add({ minX: 160, maxX: 250, minY: 314, maxY: 346 }, (l) => coffeeTable(l, 160, 314));
   add({ minX: 104, maxX: 312, minY: 370, maxY: 418 }, (l) => sofa(l, 116, 370));
   add({ minX: 20, maxX: 40, minY: 252, maxY: 272 }, (l) => themeLamp(l, LAMP[0], LAMP[1]));
   plant(318, 444, 0.9);
 
   // Attachments room.
-  add({ minX: 356, maxX: 362, minY: 248, maxY: 380 }, (l) => pinboard(l, 356, 250));
+  add({ minX: 356, maxX: 362, minY: 248, maxY: 380 }, (l) => pinboard(l, 356, 250), 'links');
   add({ minX: 412, maxX: 422, minY: 306, maxY: 322 }, (l) => actor(l, 'links', (a) => stand(a, 412, 306, ME)));
   add({ minX: 534, maxX: 566, minY: 296, maxY: 336 }, (l) => filingCabinet(l, 534, 296));
   add({ minX: 480, maxX: 510, minY: 412, maxY: 456 }, (l) => boxes(l, 480, 412));
@@ -969,7 +976,7 @@ export function buildScene(): Scene {
   plant(540, 260, 1);
 
   // Running shoe room.
-  add({ minX: 588, maxX: 618, minY: 252, maxY: 344 }, (l) => shoeRack(l, 588, 252));
+  add({ minX: 588, maxX: 618, minY: 252, maxY: 344 }, (l) => shoeRack(l, 588, 252), 'run');
   add({ minX: 636, maxX: 704, minY: 250, maxY: 272 }, (l) => bench(l, 640, 250));
   add({ minX: 650, maxX: 672, minY: 282, maxY: 298 }, (l) => {
     l.oval('m-shadow', 661, 290, 0.4, 13);
@@ -980,12 +987,12 @@ export function buildScene(): Scene {
   plant(764, 300, 1.1);
 
   // Prayer room: the mat faces the back wall (the qibla), the Qur'an on its stand beside it.
-  add({ minX: 836, maxX: 904, minY: 56, maxY: 180 }, (l) => prayerMat(l, 838, 60));
+  add({ minX: 836, maxX: 904, minY: 56, maxY: 180 }, (l) => prayerMat(l, 838, 60), 'pray');
   add({ minX: 914, maxX: 940, minY: 70, maxY: 96 }, (l) => rehal(l, 916, 72));
   add({ minX: 926, maxX: 946, minY: 176, maxY: 196 }, (l) => lantern(l, 936, 186));
 
   // Vocabulary room: a chalkboard on an easel, a study desk, and letter blocks.
-  add({ minX: 806, maxX: 920, minY: 248, maxY: 256 }, (l) => chalkboard(l, 808, 250));
+  add({ minX: 806, maxX: 920, minY: 248, maxY: 256 }, (l) => chalkboard(l, 808, 250), 'vocab');
   add({ minX: 896, maxX: 946, minY: 330, maxY: 372 }, (l) => studyDesk(l, 898, 332));
   add({ minX: 846, maxX: 876, minY: 316, maxY: 356 }, (l) => {
     l.oval('m-shadow', 861, 340, 0.4, 16);
@@ -999,7 +1006,7 @@ export function buildScene(): Scene {
   const groups: Group[] = [{ b: null, shapes: g.shapes.splice(0) }];
   for (const it of order(items)) {
     it.draw(g);
-    groups.push({ b: it.b, shapes: g.shapes.splice(0) });
+    groups.push({ b: it.b, shapes: g.shapes.splice(0), key: it.key });
   }
 
   const xs = g.pts.map((p) => p[0]);
@@ -1020,24 +1027,36 @@ export function buildScene(): Scene {
     const [ax, ay] = proj(x, y, z);
     return { x: ((ax - minX) / width) * 100, y: ((ay - minY) / height) * 100 };
   };
+  const objects: Scene['objects'] = {
+    work: box(80, 10, 52, 116, 38, 78),
+    books: box(376, 0, 0, 478, 24, 112),
+    music: box(734, 38, 0, 756, 42, 68),
+    tv: box(130, 246, 36, 280, 250, 110),
+    links: box(356, 247, 31, 362, 383, 117),
+    run: box(588, 252, 0, 618, 344, 72),
+    pray: box(838, 60, 0, 902, 176, 2),
+    vocab: box(808, 250, 30, 918, 254, 108),
+  };
+  const pins: Scene['pins'] = {
+    work: at(98, 14, 104),
+    books: at(427, 12, 126),
+    music: at(745, 40, 80),
+    tv: at(205, 248, 122),
+    links: at(358, 315, 130),
+    run: at(601, 298, 86),
+    pray: at(870, 118, 76),
+    vocab: at(863, 252, 122),
+  };
   return {
     groups,
     route,
+    pins,
     walk: { a: walkPose('a'), b: walkPose('b') },
     viewBox: `${minX.toFixed(0)} ${minY.toFixed(0)} ${width.toFixed(0)} ${height.toFixed(0)}`,
     width,
     height,
     lamp: at(LAMP[0], LAMP[1], 104),
     door: at(0, (DOOR_Y0 + DOOR_Y1) / 2, 46),
-    objects: {
-      work: box(80, 10, 52, 116, 38, 78),
-      books: box(376, 0, 0, 478, 24, 112),
-      music: box(734, 38, 0, 756, 42, 68),
-      tv: box(130, 246, 36, 280, 250, 110),
-      links: box(356, 247, 31, 362, 383, 117),
-      run: box(588, 252, 0, 618, 344, 72),
-      pray: box(838, 60, 0, 902, 176, 2),
-      vocab: box(808, 250, 30, 918, 254, 108),
-    },
+    objects,
   };
 }

@@ -139,3 +139,48 @@ alter table board_projects add column if not exists links jsonb not null default
 
 -- When a task reached Selesai; cleared if it moves back out.
 alter table board_tasks add column if not exists done_at timestamptz;
+
+-- Ruang Lari in /mydashboard: the logged runs, and the two dates the training plan is built from.
+-- A route is a list of [latitude, longitude] pairs.
+create table if not exists runs (
+  id serial primary key,
+  run_date date not null,
+  km numeric(6, 2) not null check (km > 0 and km <= 200),
+  seconds integer check (seconds is null or seconds between 1 and 172800),
+  note text not null default '' check (length(note) <= 500),
+  route jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists runs_date_idx on runs (run_date desc, id desc);
+
+create table if not exists run_settings (
+  id integer primary key default 1 check (id = 1),
+  birthday date not null,
+  start_date date not null,
+  updated_at timestamptz not null default now()
+);
+
+-- Ruang Vocabulary in /mydashboard: one row per day that was opened, with the five new
+-- words handed out that day, the five to review, and the ones ticked off.
+create table if not exists vocab_days (
+  day date primary key,
+  new_words text[] not null,
+  review_words text[] not null,
+  done_words text[] not null default '{}',
+  created_at timestamptz not null default now()
+);
+
+-- Ruang TV in /mydashboard: films and series, with the platform each is on.
+create table if not exists tv_items (
+  id serial primary key,
+  title text not null check (length(title) between 1 and 200),
+  kind text not null check (kind in ('Film', 'Series')),
+  platform text not null check (length(platform) between 1 and 40),
+  status text not null default 'done' check (status in ('watching', 'planned', 'done')),
+  rating smallint check (rating is null or rating between 1 and 5),
+  watched_on date,
+  note text not null default '' check (length(note) <= 500),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);

@@ -16,6 +16,9 @@ import pg from 'pg';
 import { IMAGE_ID, type Content, type CvInfo } from '../src/data/content.js';
 import { stackText } from '../src/data/stack.js';
 import { boardRoutes } from './board.js';
+import { runRoutes } from './run.js';
+import { tvRoutes } from './tv.js';
+import { vocabRoutes } from './vocab.js';
 import { parseExperience, parsePartners, parseProjects, parseStats } from './validate.js';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
@@ -195,6 +198,15 @@ app.get('/admin/check', (c) => c.json({ ok: true }));
 
 // Project board for /mydashboard; separate from the portfolio's content.
 app.route('/admin/board', boardRoutes(pool));
+
+// Runs and the training plan's dates for Ruang Lari in /mydashboard.
+app.route('/admin/run', runRoutes(pool));
+
+// Daily words for Ruang Vocabulary in /mydashboard.
+app.route('/admin/vocab', vocabRoutes(pool));
+
+// Films and series for Ruang TV in /mydashboard.
+app.route('/admin/tv', tvRoutes(pool));
 
 app.put('/admin/stats', async (c) => {
   const s = parseStats(await c.req.json());
