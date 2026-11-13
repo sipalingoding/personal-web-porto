@@ -92,7 +92,7 @@ export function RoomPage(props: { room: RoomKey; onHome: () => void; onWork?: ()
           <div>
             <h2>Ruang ini masih kosong</h2>
             <p>
-              Menu {r.menu} belum dibuat, jadi belum ada data untuk ditampilkan di sini. Yang sudah berisi baru Ruang Kerja, Ruang Lari, Ruang TV dan Ruang Vocabulary.
+              Menu {r.menu} belum dibuat, jadi belum ada data untuk ditampilkan di sini. Yang sudah berisi baru Ruang Kerja, Ruang TV, Ruang Lampiran, Ruang Lari dan Ruang Vocabulary.
             </p>
           </div>
           <a className="bt" href={roomHref('work')} onClick={props.onWork && inPage(props.onWork)}>

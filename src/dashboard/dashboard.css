@@ -2909,7 +2909,7 @@ p.rn-map {
 
 .tv-row-main {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 8rem 8.5rem 5.5rem;
+  grid-template-columns: 2.25rem minmax(0, 1fr) 10rem 8.5rem 5.5rem;
   align-items: center;
   gap: 0.875rem;
   width: 100%;
@@ -2931,6 +2931,112 @@ p.rn-map {
   outline-offset: -2px;
 }
 
+/* Poster from TMDB, 2:3. */
+.tv-poster {
+  display: block;
+  flex: none;
+  width: 2.25rem;
+  aspect-ratio: 2 / 3;
+  border-radius: 0.25rem;
+  background: var(--d-sunken);
+  object-fit: cover;
+}
+
+/* A platform's logo, or its first letter. */
+.tv-logo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.3125rem;
+  background: var(--d-sunken);
+  color: var(--d-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  object-fit: cover;
+}
+
+/* The title field with the picked poster, and the search results under it. */
+.tv-title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.tv-title input {
+  flex: 1;
+}
+
+.tv-hits {
+  display: grid;
+  max-height: 15rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--d-line);
+  border-radius: var(--d-r-sm);
+  list-style: none;
+}
+
+.tv-hits li + li {
+  border-top: 1px solid var(--d-line);
+}
+
+.tv-hits button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.4375rem 0.625rem;
+  border: 0;
+  background: transparent;
+  color: var(--d-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tv-hits button:hover {
+  background: var(--d-hover);
+}
+
+.tv-hits button:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: -2px;
+}
+
+.tv-hits .tv-poster {
+  width: 1.75rem;
+}
+
+.tv-offers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--d-muted);
+}
+
+.tv-offers > span {
+  width: 100%;
+}
+
+.tv-offers .bt {
+  padding-left: 0.375rem;
+}
+
+.tv-offers .bt.on {
+  border-color: var(--d-ink);
+}
+
+.tv-credit {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--d-muted);
+}
+
 /* Film or series, as a small mark before the title. */
 .tv-kind {
   display: grid;
@@ -2948,9 +3054,16 @@ p.rn-map {
 }
 
 .tv-plat {
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
   font-size: 0.8125rem;
   font-weight: 600;
+}
+
+.tv-plat > span:last-child {
+  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -2995,12 +3108,12 @@ p.rn-map {
 
 @media (max-width: 760px) {
   .tv-row-main {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
     gap: 0.375rem 0.75rem;
     padding: 0.625rem 0.875rem;
   }
 
-  .tv-row-main .tv-kind {
+  .tv-row-main > :first-child {
     grid-row: span 2;
   }
 
@@ -3016,6 +3129,157 @@ p.rn-map {
 
   .tv-row-main .tv-stars {
     grid-column: 3;
+  }
+}
+
+/* ------------------------------------------------------------------ Ruang Lampiran */
+/* Where a link comes from: the platform's logo drawn in the text colour. */
+.lk-src {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--d-r-sm);
+  background: var(--d-sunken);
+  color: var(--d-ink);
+}
+
+.lk-src i {
+  width: 1.0625rem;
+  height: 1.0625rem;
+  background: currentColor;
+  -webkit-mask: var(--si) center / contain no-repeat;
+  mask: var(--si) center / contain no-repeat;
+}
+
+.lk-src .glyph {
+  color: var(--d-muted);
+}
+
+.lk-row {
+  display: flex;
+  align-items: center;
+  padding-right: 0.625rem;
+  animation: rise 0.4s var(--ease) both;
+  animation-delay: calc(0.15s + var(--i) * 35ms);
+}
+
+.lk-row + .lk-row {
+  border-top: 1px solid var(--d-line);
+}
+
+.lk-row-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto 5.5rem;
+  align-items: center;
+  gap: 0.875rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.625rem 0.5rem 0.625rem 1.125rem;
+  color: var(--d-ink);
+  text-decoration: none;
+}
+
+.lk-row:has(.lk-row-main:hover) {
+  background: var(--d-hover);
+}
+
+.lk-row-main:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: -2px;
+}
+
+.lk-row-main .rn-run-tx b {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lk-cat {
+  max-width: 9rem;
+  overflow: hidden;
+  padding: 0 0.5rem;
+  border: 1px solid var(--d-line-2);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--d-body);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lk-find {
+  flex: 1;
+  justify-content: flex-end;
+  min-width: min(100%, 18rem);
+}
+
+.lk-find input {
+  flex: 1;
+  min-width: 0;
+  max-width: 18rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--d-line);
+  border-radius: var(--d-r-sm);
+  background: var(--d-surface);
+  color: var(--d-ink);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.lk-find input:hover {
+  border-color: var(--d-line-2);
+}
+
+.lk-find input:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: 2px;
+}
+
+.lk-find .adm-select {
+  flex: none;
+}
+
+.lk-detect,
+.lk-sources dt {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lk-detect .lk-src,
+.lk-sources .lk-src {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.3125rem;
+}
+
+.lk-detect .lk-src i,
+.lk-sources .lk-src i {
+  width: 0.8125rem;
+  height: 0.8125rem;
+}
+
+.lk-sources div {
+  align-items: center;
+}
+
+@media (max-width: 760px) {
+  .lk-row-main {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.625rem;
+    padding-left: 0.875rem;
+  }
+
+  .lk-row-main time {
+    display: none;
+  }
+
+  .lk-find input {
+    max-width: none;
   }
 }
 

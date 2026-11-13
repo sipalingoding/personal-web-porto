@@ -16,6 +16,7 @@ import pg from 'pg';
 import { IMAGE_ID, type Content, type CvInfo } from '../src/data/content.js';
 import { stackText } from '../src/data/stack.js';
 import { boardRoutes } from './board.js';
+import { linkRoutes } from './links.js';
 import { runRoutes } from './run.js';
 import { tvRoutes } from './tv.js';
 import { vocabRoutes } from './vocab.js';
@@ -207,6 +208,9 @@ app.route('/admin/vocab', vocabRoutes(pool));
 
 // Films and series for Ruang TV in /mydashboard.
 app.route('/admin/tv', tvRoutes(pool));
+
+// Saved social media links for Ruang Lampiran in /mydashboard.
+app.route('/admin/links', linkRoutes(pool));
 
 app.put('/admin/stats', async (c) => {
   const s = parseStats(await c.req.json());

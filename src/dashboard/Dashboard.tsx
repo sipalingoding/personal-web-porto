@@ -8,6 +8,7 @@ import { HouseContext } from './houseContext';
 import type { RoomKey } from './isoScene';
 import { RoomPage, inPage, roomHref, roomOf, rooms } from './Rooms';
 import { todayLong } from './stats';
+import LinksRoom from './LinksRoom';
 import ProjectBoard from './ProjectBoard';
 import RunRoom from './RunRoom';
 import TvRoom from './TvRoom';
@@ -190,6 +191,8 @@ export default function Dashboard() {
             <VocabRoom adminKey={adminKey} onLocked={lock} onHome={() => go({ kind: 'home' })} />
           ) : route.kind === 'room' && route.room === 'tv' ? (
             <TvRoom adminKey={adminKey} onLocked={lock} onHome={() => go({ kind: 'home' })} />
+          ) : route.kind === 'room' && route.room === 'links' ? (
+            <LinksRoom adminKey={adminKey} onLocked={lock} onHome={() => go({ kind: 'home' })} />
           ) : route.kind === 'room' && route.room !== 'work' ? (
             <RoomPage room={route.room} onHome={() => go({ kind: 'home' })} onWork={() => go({ kind: 'room', room: 'work' })} />
           ) : (

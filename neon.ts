@@ -13,6 +13,8 @@ export default defineConfig({
       env: {
         // Protects every /admin route used by the /data-project page.
         ADMIN_KEY: { value: process.env.ADMIN_KEY, required: true },
+        // Lets Ruang TV search films and series and look up platforms on TMDB. Without it, titles are typed by hand.
+        TMDB_API_KEY: { value: process.env.TMDB_API_KEY ?? "", required: false },
       },
     },
   },

@@ -11,20 +11,32 @@ import { countsOf, doneByDay, yearProgress, type BurnPoint, type Counts, type Da
 
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-/** True from the first time the element is on screen. */
+/** True from the first time the element is on screen. The element may appear later than the component (after data loads). */
 export function useSeen<T extends Element>(): [RefObject<T | null>, boolean] {
   const ref = useRef<T>(null);
   const [seen, setSeen] = useState(false);
+  const watch = useRef<{ el: Element; io: IntersectionObserver } | null>(null);
+  // Runs after every render, so an element that mounts late is still picked up.
   useEffect(() => {
     const el = ref.current;
-    if (!el || seen) return;
+    if (!el || seen || watch.current?.el === el) return;
     if (!('IntersectionObserver' in window)) {
       setSeen(true);
       return;
     }
+    watch.current?.io.disconnect();
     const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && setSeen(true), { threshold: 0.2 });
     io.observe(el);
-    return () => io.disconnect();
+    watch.current = { el, io };
+  });
+  // Stops watching once seen and on unmount; forgetting the element lets a remount watch it again.
+  useEffect(() => {
+    const stop = () => {
+      watch.current?.io.disconnect();
+      watch.current = null;
+    };
+    if (seen) stop();
+    return stop;
   }, [seen]);
   return [ref, seen];
 }

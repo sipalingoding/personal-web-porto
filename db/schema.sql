@@ -184,3 +184,18 @@ create table if not exists tv_items (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- A title picked from the TMDB search keeps its TMDB id, year and poster; a platform TMDB knows keeps its logo.
+alter table tv_items add column if not exists year smallint;
+alter table tv_items add column if not exists poster text;
+alter table tv_items add column if not exists tmdb_id integer;
+alter table tv_items add column if not exists platform_logo text;
+
+-- Ruang Lampiran in /mydashboard: links saved from social media, each in a category.
+create table if not exists saved_links (
+  id serial primary key,
+  url text not null check (length(url) between 1 and 1000),
+  title text not null default '' check (length(title) <= 200),
+  category text not null check (length(category) between 1 and 40),
+  created_at timestamptz not null default now()
+);

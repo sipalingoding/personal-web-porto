@@ -157,7 +157,7 @@ export function HomeView(props: { adminKey: string; onLocked: () => void; onRoom
                   <span className="hm-ix-no">{roomNo(r.key)}</span>
                   <span className="hm-ix-tx">
                     <b>{r.short}</b>
-                    <span>{r.key === 'run' ? 'Jadwal lari' : r.key === 'vocab' ? '5 kata per hari' : r.key === 'tv' ? 'Film dan series' : r.key !== 'work' ? 'Segera' : board ? `${board.projects.length} project` : 'Project'}</span>
+                    <span>{r.key === 'run' ? 'Jadwal lari' : r.key === 'vocab' ? '5 kata per hari' : r.key === 'tv' ? 'Film dan series' : r.key === 'links' ? 'Link tersimpan' : r.key !== 'work' ? 'Segera' : board ? `${board.projects.length} project` : 'Project'}</span>
                   </span>
                 </a>
               </li>
